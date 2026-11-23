@@ -38,19 +38,19 @@ export default function SmartRecommendations({
   ];
 
   return (
-    <div className="py-8 sm:py-12 bg-slate-50 min-h-[calc(100vh-80px)]">
+    <div className="py-8 sm:py-12 bg-slate-50 dark:bg-slate-950 min-h-[calc(100vh-80px)] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
         {/* Section Title Banner */}
         <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-3">
-            <Sparkles className="w-4 h-4 text-cyan-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-100 dark:bg-cyan-900/60 text-cyan-800 dark:text-cyan-300 text-xs font-bold mb-3">
+            <Sparkles className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
             <span>AI-Powered Crowd Distribution Engine</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
             Smart Destination Recommendations
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
             Personalized, crowd-conscious suggestions that match your travel vibe while directing tourist footfalls away from saturated hotspots to preserve Goa’s ecosystem.
           </p>
         </div>
@@ -189,10 +189,10 @@ export default function SmartRecommendations({
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 Curated Recommendation Categories
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Browse destinations sorted by experiential categories
               </p>
             </div>
@@ -206,7 +206,7 @@ export default function SmartRecommendations({
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     activeCategory === cat
                       ? 'bg-cyan-700 text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   {cat}
@@ -222,10 +222,10 @@ export default function SmartRecommendations({
               return (
                 <div
                   key={dest.id}
-                  className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group"
+                  className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden group"
                 >
                   {/* Image */}
-                  <div className="relative h-48 overflow-hidden bg-slate-100">
+                  <div className="relative h-48 overflow-hidden bg-slate-100 dark:bg-slate-800">
                     <img
                       src={dest.image}
                       alt={dest.name}
@@ -235,14 +235,14 @@ export default function SmartRecommendations({
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20 pointer-events-none" />
 
                     {/* Category pill */}
-                    <span className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-md text-slate-800 text-[11px] font-bold rounded-full shadow-xs">
+                    <span className="absolute top-3 left-3 px-3 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-800 dark:text-slate-200 text-[11px] font-bold rounded-full shadow-xs">
                       {dest.category}
                     </span>
 
                     {/* Favorite Button */}
                     <button
                       onClick={() => onToggleFavorite(dest.id)}
-                      className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white text-slate-700 hover:text-red-500 backdrop-blur-md shadow-xs transition-colors cursor-pointer"
+                      className="absolute top-3 right-3 p-2 rounded-full bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 backdrop-blur-md shadow-xs transition-colors cursor-pointer"
                     >
                       <Heart
                         className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`}
@@ -273,16 +273,16 @@ export default function SmartRecommendations({
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <h4
                           onClick={() => onSelectDestinationModal(dest)}
-                          className="font-bold text-slate-900 group-hover:text-cyan-700 transition-colors text-base cursor-pointer"
+                          className="font-bold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors text-base cursor-pointer"
                         >
                           {dest.name}
                         </h4>
                         <span
                           className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border shrink-0 ${
-                            dest.crowdScore >= 80 ? 'bg-red-50 text-red-700 border-red-200' :
-                            dest.crowdScore >= 60 ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                            dest.crowdScore >= 40 ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                            'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            dest.crowdScore >= 80 ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900' :
+                            dest.crowdScore >= 60 ? 'bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-900' :
+                            dest.crowdScore >= 40 ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900' :
+                            'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900'
                           }`}
                         >
                           {dest.crowdLevel} ({dest.crowdScore}%)
@@ -290,15 +290,15 @@ export default function SmartRecommendations({
                       </div>
 
                       {/* Description */}
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4">
                         {dest.description}
                       </p>
 
                       {/* Highlights Snapshot */}
                       {dest.highlights && (
-                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] text-slate-600 space-y-1 mb-4">
-                          <div className="flex items-center gap-1.5 text-teal-800 font-semibold">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                        <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-300 space-y-1 mb-4">
+                          <div className="flex items-center gap-1.5 text-teal-800 dark:text-teal-300 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
                             <span className="truncate">{dest.highlights[0]}</span>
                           </div>
                         </div>
@@ -308,7 +308,7 @@ export default function SmartRecommendations({
                     {/* View Details Button */}
                     <button
                       onClick={() => onSelectDestinationModal(dest)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-cyan-700 hover:text-white text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      className="w-full py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-cyan-700 dark:hover:bg-cyan-600 hover:text-white dark:hover:text-white text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       <span>View Details</span>
                       <ArrowUpRight className="w-4 h-4" />

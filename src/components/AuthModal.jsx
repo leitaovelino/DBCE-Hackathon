@@ -132,7 +132,7 @@ export default function AuthModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="fixed inset-0" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-10 flex flex-col my-auto">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 flex flex-col my-auto transition-colors">
         
         {/* Top Header */}
         <div className="bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 text-white p-6 relative">
@@ -164,14 +164,14 @@ export default function AuthModal({
 
         {/* Tab Switcher (Login vs Register) */}
         {mode !== 'forgot' && (
-          <div className="flex border-b border-slate-100 bg-slate-50 text-xs font-bold">
+          <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-xs font-bold">
             <button
               type="button"
               onClick={() => switchMode('login')}
               className={`flex-1 py-3 text-center transition-colors cursor-pointer ${
                 mode === 'login'
-                  ? 'bg-white text-cyan-800 border-b-2 border-cyan-600 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-white dark:bg-slate-900 text-cyan-800 dark:text-cyan-400 border-b-2 border-cyan-600 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Sign In
@@ -181,8 +181,8 @@ export default function AuthModal({
               onClick={() => switchMode('register')}
               className={`flex-1 py-3 text-center transition-colors cursor-pointer ${
                 mode === 'register'
-                  ? 'bg-white text-teal-800 border-b-2 border-teal-600 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-400 border-b-2 border-teal-600 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               Register
@@ -195,16 +195,16 @@ export default function AuthModal({
           
           {/* Error Alert */}
           {error && (
-            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-medium flex items-start gap-2.5 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-300 text-xs font-medium flex items-start gap-2.5 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Success Alert */}
           {successMsg && (
-            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-start gap-2.5 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-xs font-medium flex items-start gap-2.5 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -214,7 +214,7 @@ export default function AuthModal({
             {/* Register: Full Name */}
             {mode === 'register' && (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Full Name</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Full Name</label>
                 <div className="relative">
                   <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
@@ -223,7 +223,7 @@ export default function AuthModal({
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Rahul Sharma"
                     required
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -231,7 +231,7 @@ export default function AuthModal({
 
             {/* Email Address */}
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">Email Address</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Email Address</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
@@ -240,7 +240,7 @@ export default function AuthModal({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
                 />
               </div>
             </div>
@@ -249,12 +249,12 @@ export default function AuthModal({
             {mode !== 'forgot' && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700">Password</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Password</label>
                   {mode === 'login' && (
                     <button
                       type="button"
                       onClick={() => switchMode('forgot')}
-                      className="text-[11px] text-cyan-700 hover:underline font-semibold cursor-pointer"
+                      className="text-[11px] text-cyan-700 dark:text-cyan-400 hover:underline font-semibold cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -268,12 +268,12 @@ export default function AuthModal({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
+                    className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-cyan-500 focus:outline-hidden"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -284,7 +284,7 @@ export default function AuthModal({
             {/* Register: Confirm Password */}
             {mode === 'register' && (
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Confirm Password</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Confirm Password</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
@@ -293,7 +293,7 @@ export default function AuthModal({
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-teal-500 focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -302,20 +302,20 @@ export default function AuthModal({
             {/* Register: Role Selection Radio Cards */}
             {mode === 'register' && (
               <div className="space-y-2 pt-1">
-                <label className="text-xs font-bold text-slate-700">Select Account Role</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Select Account Role</label>
                 <div className="grid grid-cols-2 gap-2.5">
                   
                   {/* Tourist */}
                   <label
                     className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
                       role === 'tourist'
-                        ? 'bg-cyan-50 border-cyan-400 ring-2 ring-cyan-400/20 shadow-xs'
-                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-cyan-50 dark:bg-cyan-950/40 border-cyan-400 dark:border-cyan-500 ring-2 ring-cyan-400/20 shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1">
-                        <Compass className="w-3.5 h-3.5 text-cyan-600" />
+                      <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                        <Compass className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                         <span>Tourist</span>
                       </span>
                       <input
@@ -327,7 +327,7 @@ export default function AuthModal({
                         className="text-cyan-600 focus:ring-cyan-500"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-500 leading-snug">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
                       Explore places, plan itineraries & book local stays
                     </span>
                   </label>
@@ -336,13 +336,13 @@ export default function AuthModal({
                   <label
                     className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
                       role === 'business_owner'
-                        ? 'bg-teal-50 border-teal-400 ring-2 ring-teal-400/20 shadow-xs'
-                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                        ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-400 dark:border-teal-500 ring-2 ring-teal-400/20 shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-teal-600" />
+                      <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                         <span>Business</span>
                       </span>
                       <input
@@ -354,13 +354,13 @@ export default function AuthModal({
                         className="text-teal-600 focus:ring-teal-500"
                       />
                     </div>
-                    <span className="text-[10px] text-slate-500 leading-snug">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
                       List homestays, food & tours; manage bookings
                     </span>
                   </label>
 
                 </div>
-                <p className="text-[10px] text-slate-400 italic">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 italic">
                   *Tourism Authority roles are provisioned exclusively by government administrators.
                 </p>
               </div>
@@ -393,12 +393,12 @@ export default function AuthModal({
           </form>
 
           {/* Footer Back/Switch Links */}
-          <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
             {mode === 'forgot' ? (
               <button
                 type="button"
                 onClick={() => switchMode('login')}
-                className="text-cyan-700 hover:underline font-bold cursor-pointer"
+                className="text-cyan-700 dark:text-cyan-400 hover:underline font-bold cursor-pointer"
               >
                 ← Back to Sign In
               </button>
@@ -408,7 +408,7 @@ export default function AuthModal({
                 <button
                   type="button"
                   onClick={() => switchMode('register')}
-                  className="text-teal-700 hover:underline font-bold cursor-pointer"
+                  className="text-teal-700 dark:text-teal-400 hover:underline font-bold cursor-pointer"
                 >
                   Create an account
                 </button>
@@ -419,7 +419,7 @@ export default function AuthModal({
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="text-cyan-700 hover:underline font-bold cursor-pointer"
+                  className="text-cyan-700 dark:text-cyan-400 hover:underline font-bold cursor-pointer"
                 >
                   Sign in
                 </button>

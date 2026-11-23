@@ -99,49 +99,49 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
     const cleanedText = rawText.replace(/\[RECOMMENDED:\s*[^\]]+\]/gi, '').trim();
 
     return (
-      <div className="prose-chat text-xs sm:text-sm text-slate-800 leading-relaxed break-words overflow-hidden">
+      <div className="prose-chat text-xs sm:text-sm text-slate-800 dark:text-slate-100 leading-relaxed break-words overflow-hidden">
         <ReactMarkdown
           components={{
             h1: ({ node, ...props }) => (
-              <h3 className="font-extrabold text-slate-900 text-sm sm:text-base mt-3 mb-1.5 tracking-tight border-b border-slate-100 pb-1" {...props} />
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base mt-3 mb-1.5 tracking-tight border-b border-slate-100 dark:border-slate-800 pb-1" {...props} />
             ),
             h2: ({ node, ...props }) => (
-              <h4 className="font-bold text-cyan-900 text-xs sm:text-sm mt-3 mb-1 tracking-tight" {...props} />
+              <h4 className="font-bold text-cyan-900 dark:text-cyan-400 text-xs sm:text-sm mt-3 mb-1 tracking-tight" {...props} />
             ),
             h3: ({ node, ...props }) => (
-              <h5 className="font-bold text-slate-900 text-xs sm:text-sm mt-2.5 mb-1" {...props} />
+              <h5 className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm mt-2.5 mb-1" {...props} />
             ),
             h4: ({ node, ...props }) => (
-              <h6 className="font-bold text-slate-800 text-[11px] sm:text-xs mt-2 mb-0.5" {...props} />
+              <h6 className="font-bold text-slate-800 dark:text-slate-200 text-[11px] sm:text-xs mt-2 mb-0.5" {...props} />
             ),
             p: ({ node, ...props }) => (
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed my-1.5 break-words" {...props} />
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed my-1.5 break-words" {...props} />
             ),
             strong: ({ node, ...props }) => (
-              <strong className="font-extrabold text-slate-900" {...props} />
+              <strong className="font-extrabold text-slate-900 dark:text-white" {...props} />
             ),
             em: ({ node, ...props }) => (
-              <em className="italic text-slate-600 font-medium" {...props} />
+              <em className="italic text-slate-600 dark:text-slate-400 font-medium" {...props} />
             ),
             ul: ({ node, ...props }) => (
-              <ul className="my-2 space-y-1 pl-4 list-disc marker:text-cyan-600 text-xs sm:text-sm text-slate-700" {...props} />
+              <ul className="my-2 space-y-1 pl-4 list-disc marker:text-cyan-600 dark:marker:text-cyan-400 text-xs sm:text-sm text-slate-700 dark:text-slate-300" {...props} />
             ),
             ol: ({ node, ...props }) => (
-              <ol className="my-2 space-y-1.5 pl-4 list-decimal marker:text-cyan-700 marker:font-bold text-xs sm:text-sm text-slate-700" {...props} />
+              <ol className="my-2 space-y-1.5 pl-4 list-decimal marker:text-cyan-700 dark:marker:text-cyan-400 marker:font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300" {...props} />
             ),
             li: ({ node, ...props }) => (
               <li className="leading-relaxed pl-1" {...props} />
             ),
             code: ({ inline, className, children, ...props }) => (
-              <code className="px-1.5 py-0.5 bg-slate-100 text-cyan-800 rounded font-mono text-[11px] sm:text-xs font-semibold border border-slate-200/80" {...props}>
+              <code className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-cyan-800 dark:text-cyan-300 rounded font-mono text-[11px] sm:text-xs font-semibold border border-slate-200/80 dark:border-slate-700" {...props}>
                 {children}
               </code>
             ),
             blockquote: ({ node, ...props }) => (
-              <blockquote className="border-l-3 border-cyan-500 pl-3 my-2 text-xs sm:text-sm italic text-slate-600 bg-cyan-50/50 py-1.5 rounded-r-lg" {...props} />
+              <blockquote className="border-l-3 border-cyan-500 pl-3 my-2 text-xs sm:text-sm italic text-slate-600 dark:text-slate-300 bg-cyan-50/50 dark:bg-cyan-950/30 py-1.5 rounded-r-lg" {...props} />
             ),
             hr: ({ node, ...props }) => (
-              <hr className="my-3 border-slate-200" {...props} />
+              <hr className="my-3 border-slate-200 dark:border-slate-800" {...props} />
             )
           }}
         >
@@ -152,11 +152,11 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
   };
 
   return (
-    <div className="py-6 sm:py-10 bg-slate-100 min-h-[calc(100vh-80px)] flex flex-col justify-between">
+    <div className="py-6 sm:py-10 bg-slate-100 dark:bg-slate-950 min-h-[calc(100vh-80px)] flex flex-col justify-between transition-colors">
       <div className="max-w-4xl mx-auto px-4 w-full flex-1 flex flex-col">
         
         {/* Chat Window Container */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl overflow-hidden flex flex-col flex-1 min-h-[620px] max-h-[82vh]">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col flex-1 min-h-[620px] max-h-[82vh] transition-colors">
           
           {/* Header Bar */}
           <div className="px-5 py-4 bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 text-white flex items-center justify-between border-b border-slate-800">
@@ -193,7 +193,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
           </div>
 
           {/* Messages Stream */}
-          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-5 bg-slate-50/70">
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-5 bg-slate-50/70 dark:bg-slate-950/50">
             
             {messages.map((msg) => {
               const isAssistant = msg.sender === 'assistant';
@@ -221,20 +221,20 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
 
                   {/* Message Bubble */}
                   <div
-                    className={`p-4 rounded-2xl text-slate-800 ${
+                    className={`p-4 rounded-2xl ${
                       isAssistant
-                        ? 'bg-white border border-slate-200/90 shadow-sm rounded-tl-none'
+                        ? 'bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700 shadow-sm rounded-tl-none'
                         : 'bg-gradient-to-r from-cyan-700 to-teal-700 text-white rounded-tr-none shadow-sm'
                     }`}
                   >
-                    <div className={isAssistant ? 'text-slate-800' : 'text-white text-xs sm:text-sm font-medium whitespace-pre-wrap'}>
+                    <div className={isAssistant ? 'text-slate-800 dark:text-slate-100' : 'text-white text-xs sm:text-sm font-medium whitespace-pre-wrap'}>
                       {isAssistant ? renderMarkdown(msg.text) : msg.text}
                     </div>
 
                     {/* Attached Destination Recommendations Pills */}
                     {isAssistant && attachedDestinations.length > 0 && (
-                      <div className="mt-4 pt-3 border-t border-slate-100">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
                           Suggested Smart Places:
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -242,7 +242,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
                             <div
                               key={dest.id}
                               onClick={() => onSelectDestination && onSelectDestination(dest)}
-                              className="p-2.5 rounded-xl border border-slate-200 hover:border-cyan-400 hover:shadow-xs transition-all bg-slate-50/80 cursor-pointer flex items-center gap-2.5 group"
+                              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-cyan-400 dark:hover:border-cyan-500 hover:shadow-xs transition-all bg-slate-50/80 dark:bg-slate-900/80 cursor-pointer flex items-center gap-2.5 group"
                             >
                               <img
                                 src={dest.image}
@@ -250,7 +250,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
                                 className="w-10 h-10 rounded-lg object-cover shrink-0"
                               />
                               <div className="flex-1 min-w-0">
-                                <h5 className="text-xs font-bold text-slate-800 group-hover:text-cyan-700 truncate">
+                                <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-cyan-700 dark:group-hover:text-cyan-400 truncate">
                                   {dest.name}
                                 </h5>
                                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -259,12 +259,12 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
                                       dest.crowdScore >= 70 ? 'bg-red-500' : 'bg-emerald-500'
                                     }`}
                                   />
-                                  <span className="text-[10px] text-slate-500 font-medium">
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                                     {dest.crowdLevel} ({dest.crowdScore}%)
                                   </span>
                                 </div>
                               </div>
-                              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-700 shrink-0" />
+                              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-700 dark:group-hover:text-cyan-400 shrink-0" />
                             </div>
                           ))}
                         </div>
@@ -273,7 +273,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
 
                     <div
                       className={`text-[10px] mt-2 text-right ${
-                        isAssistant ? 'text-slate-400' : 'text-cyan-100'
+                        isAssistant ? 'text-slate-400 dark:text-slate-400' : 'text-cyan-100'
                       }`}
                     >
                       {msg.timestamp}
@@ -289,11 +289,11 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
                 <div className="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center shrink-0">
                   <Sparkles className="w-4 h-4 animate-spin-slow" />
                 </div>
-                <div className="px-4 py-3 bg-white border border-slate-200 rounded-2xl rounded-tl-none shadow-xs flex items-center gap-1.5">
+                <div className="px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-tl-none shadow-xs flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-cyan-600 animate-bounce" />
                   <span className="w-2 h-2 rounded-full bg-teal-600 animate-bounce [animation-delay:0.2s]" />
                   <span className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce [animation-delay:0.4s]" />
-                  <span className="text-xs text-slate-500 font-medium ml-1">Analyzing crowds & routes...</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">Analyzing crowds & routes...</span>
                 </div>
               </div>
             )}
@@ -302,7 +302,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
           </div>
 
           {/* Quick Suggested Questions Bar */}
-          <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 overflow-x-auto no-scrollbar flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar flex items-center gap-2">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
               <MessageSquare className="w-3 h-3 text-cyan-600" />
               <span>Ask:</span>
@@ -312,7 +312,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
                 key={idx}
                 onClick={() => handleSend(q)}
                 disabled={isTyping}
-                className="px-3 py-1 bg-white hover:bg-cyan-50 hover:border-cyan-300 border border-slate-200 rounded-full text-xs text-slate-700 whitespace-nowrap transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                className="px-3 py-1 bg-white dark:bg-slate-800 hover:bg-cyan-50 dark:hover:bg-slate-700 hover:border-cyan-300 dark:hover:border-cyan-500 border border-slate-200 dark:border-slate-700 rounded-full text-xs text-slate-700 dark:text-slate-300 whitespace-nowrap transition-colors cursor-pointer shrink-0 disabled:opacity-50"
               >
                 {q}
               </button>
@@ -325,7 +325,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
               e.preventDefault();
               handleSend();
             }}
-            className="p-3 sm:p-4 bg-white border-t border-slate-200 flex items-center gap-2"
+            className="p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2"
           >
             <input
               ref={inputRef}
@@ -334,7 +334,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Ask anything (e.g. 'Peaceful beach with fresh seafood under ₹1500')..."
               disabled={isTyping}
-              className="flex-1 bg-slate-100 hover:bg-slate-100/80 focus:bg-white text-slate-800 text-xs sm:text-sm px-4 py-3 rounded-2xl border border-transparent focus:border-cyan-500 focus:outline-hidden focus:ring-2 focus:ring-cyan-500/20 transition-all"
+              className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 focus:bg-white dark:focus:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm px-4 py-3 rounded-2xl border border-transparent focus:border-cyan-500 focus:outline-hidden focus:ring-2 focus:ring-cyan-500/20 transition-all"
             />
             <button
               type="submit"
@@ -348,8 +348,8 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
         </div>
 
         {/* Bottom Tip */}
-        <p className="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
           <span>GoaSmart AI utilizes realistic crowd estimation algorithms to recommend quieter, sustainable destinations.</span>
         </p>
 
