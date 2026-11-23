@@ -10,20 +10,22 @@ Over 9 million tourists visit Goa every year, but over 85% crowd into the same 5
 
 ## 🚀 The GoaSmart Solution
 GoaSmart intelligently redistributes visitor flows using:
-1. **Real-time Crowd Estimation & Forecasting:** Dynamic density indicators (Low, Moderate, High, Very High) with hourly trend projections.
-2. **AI Tourism Companion (Phase 2):** Conversational AI travel assistant with personalized query parsing, budget reasoning, and congestion diversion suggestions.
-3. **Interactive Goa Tourism Map (Phase 2):** Leaflet & OpenStreetMap GIS with color-coded crowd pins, category layers, search, and synchronized destination panel.
-4. **Smart Destination Recommendations (Phase 2):** Persona-based matcher (Peaceful, Culture, Adventure, Budget) and category filtering that directs visitors to pristine alternatives.
-5. **Multilingual Support:** Native support for English, हिन्दी (Hindi), and कोंकणी (Konkani).
-6. **Local Business Marketplace (Phase 3):** Fair visibility for family homestays, clay potters, kayak operators, and local guides without pay-to-win advertising monopolies.
-7. **Tourism Authority Analytics & Simulation Engine (Phase 4):** Agent-based modeling comparing standard tourism vs. GoaSmart distributed flow.
+1. **Real-time Crowd Estimation & Forecasting (Phase 3):** Dedicated crowd telemetry dashboard with 3 categories (LOW, MODERATE, HIGH), hourly predictions, diurnal profiles, and weekly curves.
+2. **Intelligent Tourist Nudges (Phase 3):** Contextual redirection engine that prompts tourists at high-crowd hotspots with serene alternatives (e.g. Baga ➔ Cola Lagoon, Calangute ➔ Galgibaga, Aguada ➔ Reis Magos) with 1-click itinerary switching.
+3. **Smart Itinerary Planner (Phase 3):** Multi-day route generator customized by duration (1, 2, 3, 5 days), start location, budget, and travel preferences with expense calculation and customizable stops.
+4. **AI Tourism Companion (Phase 2):** Conversational AI travel assistant with personalized query parsing, budget reasoning, and congestion diversion suggestions.
+5. **Interactive Goa Tourism Map (Phase 2):** Leaflet & OpenStreetMap GIS with color-coded crowd pins, category layers, search, and synchronized destination panel.
+6. **Smart Destination Recommendations (Phase 2):** Persona-based matcher (Peaceful, Culture, Adventure, Budget) and category filtering that directs visitors to pristine alternatives.
+7. **Multilingual Support:** Native support for English, हिन्दी (Hindi), and कोंकणी (Konkani).
+8. **Local Business Marketplace (Phase 4):** Fair visibility for family homestays, clay potters, kayak operators, and local guides without pay-to-win advertising monopolies.
+9. **Tourism Authority Analytics & Simulation Engine (Phase 5):** Agent-based modeling comparing standard tourism vs. GoaSmart distributed flow.
 
 ---
 
 ## 🛠️ Technology Stack
 - **Frontend:** React 18, Vite, Tailwind CSS, Lucide React
 - **Mapping & GIS:** Leaflet, OpenStreetMap, CartoDB Voyager tiles
-- **AI Services:** Modular `chatService.js` and `recommendationService.js` ready for backend Google Gemini API endpoints
+- **Services:** Modular `crowdService.js`, `itineraryService.js`, `nudgeService.js`, `chatService.js`, `recommendationService.js` ready for backend API endpoints
 - **Internationalization:** Multi-language state architecture (English, Hindi, Konkani)
 - **Design System:** Custom Goa-inspired palette (Deep Ocean Turquoise, Sand Amber, Western Ghats Emerald)
 
@@ -75,14 +77,19 @@ DBCE-Hackathon/
 │   │   ├── DestinationCard.jsx         # Card with crowd meters, badges, and quick actions
 │   │   ├── DestinationModal.jsx        # Deep-dive modal with hourly crowd curves & alternative suggestions
 │   │   ├── FavoritesDrawer.jsx         # Saved trip itinerary with overall crowd health score
+│   │   ├── CrowdIntelligenceDashboard.jsx # Phase 3: Crowd telemetry, 3-category badges & predictive forecasts
+│   │   ├── SmartItineraryPlanner.jsx   # Phase 3: Multi-day itinerary generator & intelligent tourist nudges
 │   │   ├── AIChatbot.jsx               # Phase 2: Dedicated AI Tourism Assistant conversational UI
 │   │   ├── InteractiveMap.jsx          # Phase 2: Interactive Leaflet map with crowd pins & layers
 │   │   ├── SmartRecommendations.jsx    # Phase 2: Persona-based recommendations & category matcher
 │   │   ├── WhyGoaSmart.jsx             # Problem vs solution impact overview
-│   │   ├── BusinessPortalPreview.jsx   # Phase 3 local business preview
-│   │   ├── AuthorityDashboardPreview.jsx # Phase 4 authority analytics & simulation preview
+│   │   ├── BusinessPortalPreview.jsx   # Phase 4 local business preview
+│   │   ├── AuthorityDashboardPreview.jsx # Phase 5 authority analytics & simulation preview
 │   │   └── Footer.jsx                  # Comprehensive footer with portal switchers
 │   ├── services/
+│   │   ├── crowdService.js             # Phase 3: Synthetic crowd metrics, hourly & weekly forecasts
+│   │   ├── itineraryService.js         # Phase 3: Multi-day route & expense planning engine
+│   │   ├── nudgeService.js             # Phase 3: Congestion detection and alternative nudges
 │   │   ├── chatService.js              # Phase 2: Conversational reasoning service (Gemini ready)
 │   │   └── recommendationService.js    # Phase 2: Personalized recommendation algorithms
 │   ├── data/
@@ -100,19 +107,14 @@ DBCE-Hackathon/
 
 ---
 
-## 🏆 Current Status: Phase 1 & Phase 2 Complete
+## 🏆 Current Status: Phase 1, Phase 2 & Phase 3 Complete
 - [x] **Phase 1: Working Foundation & Destination Explorer**
-  - Responsive Landing Page & Hero Section
-  - Real-time Crowd Status Marquee Ticker
-  - Multilingual Switcher (English, Hindi, Konkani)
-  - Curated 20+ Goa Destination dataset with crowd metrics
-  - Destination Detail Modal with Hourly Crowd Curves & Alternative Recommendations
-  - Saved Places Drawer with Trip Crowd Health Score
-- [x] **Phase 2: Intelligent Features & Map System**
-  - Dedicated AI Tourism Companion Chatbot (`AIChatbot.jsx` + `chatService.js`)
-  - Suggested conversational prompt chips & budget/seafood reasoning
-  - Interactive Goa Map with Leaflet & OpenStreetMap (`InteractiveMap.jsx`)
-  - 6 Map Category layers (Beaches, Historical, Religious, Nature, Adventure, Popular)
-  - Color-coded crowd pins (Green, Yellow, Orange, Red) with synchronized info panel
-  - Smart Destination Recommendations (`SmartRecommendations.jsx`) with travel style matcher
-  - Production build tested and verified (0 errors)
+- [x] **Phase 2: Intelligent Chatbot, Map System & Recommendations**
+- [x] **Phase 3: Crowd Intelligence, Smart Itinerary Planner & Tourist Nudges**
+  - Dedicated Crowd Intelligence Dashboard with 3 status tiers (LOW, MODERATE, HIGH)
+  - Visual state-wide crowd distribution chart and KPI summaries
+  - Hourly, tomorrow, and weekly crowd forecast visualizers (clearly labelled simulated data)
+  - Smart Itinerary Planner supporting customizable duration, starting point, budget, travelers, and categories
+  - Day-by-day organized plan with duration, expense, travel time, and stop removal/addition
+  - Contextual Tourist Nudges prompting alternative quiet spots when high crowd is anticipated
+  - Zero breaking changes to Phase 1 and Phase 2; full production build passing (0 errors)
