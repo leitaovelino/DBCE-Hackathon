@@ -155,7 +155,7 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
         config: {
           systemInstruction: GOA_TOURISM_SYSTEM_PROMPT,
           temperature: 0.7,
-          maxOutputTokens: 4000
+          maxOutputTokens: 6000
         }
       });
 
@@ -167,9 +167,9 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
 
       // If invalid API key, don't bother retrying other models
       if (
-        apiError.status === 400 || 
-        apiError.status === 401 || 
-        apiError.message?.includes('API_KEY_INVALID') || 
+        apiError.status === 400 ||
+        apiError.status === 401 ||
+        apiError.message?.includes('API_KEY_INVALID') ||
         apiError.message?.includes('UNAUTHENTICATED') ||
         apiError.message?.includes('API key not valid')
       ) {
