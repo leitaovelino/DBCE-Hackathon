@@ -57,6 +57,14 @@ export async function sendChatMessage(userMessage, conversationHistory = []) {
  * Intelligent Local Goan Knowledge Engine (Fallback when backend is offline)
  */
 function getLocalHeuristicResponse(userMessage) {
+  const result = getRawLocalHeuristicResponse(userMessage);
+  return {
+    ...result,
+    text: `${result.text}\n\n*(Note: Offline fallback response from GoaSmart Local Knowledge Engine)*`
+  };
+}
+
+function getRawLocalHeuristicResponse(userMessage) {
   const text = userMessage.toLowerCase().trim();
 
   // 1. Best beaches / Peaceful beaches
