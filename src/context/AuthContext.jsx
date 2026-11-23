@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
     let tokenHasAuthority = false;
     try {
       const idTokenResult = await firebaseUser.getIdTokenResult(forceRefresh);
-      tokenHasAuthority = idTokenResult.claims && idTokenResult.claims.role === 'authority';
+      tokenHasAuthority = Boolean(idTokenResult.claims && idTokenResult.claims.role === 'authority');
     } catch (e) {
       console.warn('Could not inspect Firebase ID token claims:', e);
     }
@@ -65,16 +65,17 @@ export function AuthProvider({ children }) {
     }
 
     // 3. Security Authority Policy:
-    // If the Firestore profile claims 'authority' but the JWT ID token lacks the custom claim,
-    // the system refuses to grant authority privileges and downgrades to 'tourist'.
+    // Authority privilege strictly requires token.role == 'authority'.
+    // If token has authority claim, grant authority role.
+    // If Firestore profile claims 'authority' but token lacks claim, downgrade to 'tourist'.
     let effectiveRole = profile.role || 'tourist';
-    if (effectiveRole === 'authority' && !tokenHasAuthority) {
+    if (tokenHasAuthority) {
+      effectiveRole = 'authority';
+    } else if (effectiveRole === 'authority' && !tokenHasAuthority) {
       console.warn(
         'Security Alert: Firestore document marked as authority, but Firebase Auth ID Token lacks verified custom claim. Access downgraded to tourist.'
       );
       effectiveRole = 'tourist';
-    } else if (tokenHasAuthority) {
-      effectiveRole = 'authority';
     }
 
     const finalProfile = { ...profile, role: effectiveRole };
@@ -103,7 +104,7 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  // Force-refresh ID token claims (useful immediately after admin assigns claim)
+  // Force-refresh ID token claims (useful immediately after admin assigns claim or Sync Claims clicked)
   const refreshAuthorityToken = async () => {
     if (!auth.currentUser) return false;
     try {
@@ -142,6 +143,7 @@ export function AuthProvider({ children }) {
 
     await setDoc(userDocRef, profileData);
 
+    setCurrentUser(user);
     setUserProfile({
       ...profileData,
       createdAt: new Date()
@@ -156,6 +158,7 @@ export function AuthProvider({ children }) {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
+    setCurrentUser(user);
     const { profile, hasAuthority } = await resolveProfileAndClaims(user, true);
     setUserProfile(profile);
     setHasAuthorityClaim(hasAuthority);
@@ -199,9 +202,11 @@ export function AuthProvider({ children }) {
 
   const value = {
     currentUser,
+    user: currentUser, // Exported alias for compatibility
     userProfile,
     role: userProfile?.role || 'guest',
     hasAuthorityClaim,
+    isAuthenticated: Boolean(currentUser),
     loading,
     register,
     login,

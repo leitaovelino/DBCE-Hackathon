@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ShieldAlert, ShieldCheck, Activity, BarChart3, TrendingDown, TrendingUp, Users, MapPin, AlertTriangle, ArrowRight, CheckCircle2, Filter, Info, Compass, Layers } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Activity, BarChart3, TrendingDown, TrendingUp, Users, MapPin, AlertTriangle, ArrowRight, CheckCircle2, Filter, Info, Compass, Layers, LogOut } from 'lucide-react';
 import { DESTINATIONS } from '../data/destinations';
+import { useAuth } from '../context/AuthContext';
 import {
   AUTHORITY_KPIS,
   REGIONAL_VISITOR_FLOW,
@@ -16,6 +17,7 @@ export default function TourismAuthorityDashboard({
   onSelectDestinationModal,
   onNavigateToMarketplace
 }) {
+  const { currentUser, userProfile, logout } = useAuth();
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
@@ -152,7 +154,24 @@ export default function TourismAuthorityDashboard({
             </p>
           </div>
 
-          <div className="self-start md:self-auto flex flex-col items-start md:items-end gap-1.5">
+          <div className="self-start md:self-auto flex flex-col items-start md:items-end gap-2.5">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-blue-300 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>{userProfile?.name || currentUser?.displayName || currentUser?.email || 'Official'}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 font-extrabold border border-blue-400/30">
+                  GOV OFFICIAL
+                </span>
+              </div>
+              <button
+                onClick={logout}
+                className="px-3 py-1.5 bg-red-950/80 hover:bg-red-900 text-red-300 border border-red-800 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                title="Sign Out of Authority Command Center"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
             <span className="text-xs text-slate-400 font-mono flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span>Telemetry: {AUTHORITY_KPIS.lastSync}</span>

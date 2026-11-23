@@ -101,23 +101,25 @@ export async function getBusinessesFromFirestore() {
     const q = query(bizRef, where('isActive', '==', true));
     const snapshot = await getDocs(q);
 
+    let firestoreListings = [];
     if (!snapshot.empty) {
-      const firestoreListings = snapshot.docs.map(normalizeBusinessDoc);
-      // Update local storage cache
-      saveBusinesses(firestoreListings);
-      return firestoreListings;
+      firestoreListings = snapshot.docs.map(normalizeBusinessDoc);
+    } else {
+      const allSnapshot = await getDocs(bizRef);
+      if (!allSnapshot.empty) {
+        firestoreListings = allSnapshot.docs.map(normalizeBusinessDoc);
+      }
     }
 
-    // Try fetching without isActive filter if empty
-    const allSnapshot = await getDocs(bizRef);
-    if (!allSnapshot.empty) {
-      const allListings = allSnapshot.docs.map(normalizeBusinessDoc);
-      saveBusinesses(allListings);
-      return allListings;
-    }
+    // Data Protection: Merge Firestore listings with baseline INITIAL_BUSINESSES
+    // so baseline records are always accessible even if some are still synchronizing.
+    const existingIds = new Set(firestoreListings.map((b) => b.id));
+    const missingBaseline = INITIAL_BUSINESSES.filter((b) => !existingIds.has(b.id));
+    const combined = [...firestoreListings, ...missingBaseline];
 
-    // Fallback to local data if collection is not yet seeded
-    return getBusinesses();
+    // Update local storage cache
+    saveBusinesses(combined);
+    return combined;
   } catch (error) {
     console.warn('Firestore business fetch failed, using local cache:', error.message);
     return getBusinesses();
@@ -129,12 +131,21 @@ export async function getBusinessesFromFirestore() {
  * Enforces that ownerUid matches the authenticated user UID.
  */
 export async function addBusiness(newBizData, ownerUid = null) {
+  if (!newBizData || !newBizData.name || !newBizData.name.trim()) {
+    throw new Error('Business name is required.');
+  }
+  if (!newBizData.category) {
+    throw new Error('Business category is required.');
+  }
+
   const current = getBusinesses();
-  const price = Number(newBizData.startingPrice || newBizData.price || 500);
+  const price = Math.max(0, Number(newBizData.startingPrice || newBizData.price || 500));
+
+  const resolvedOwnerUid = ownerUid || newBizData.ownerUid || 'anonymous-owner';
 
   const payload = {
-    ownerUid: ownerUid || newBizData.ownerUid || 'anonymous-owner',
-    name: newBizData.name,
+    ownerUid: resolvedOwnerUid,
+    name: newBizData.name.trim(),
     category: newBizData.category,
     description: newBizData.description || '',
     region: newBizData.region || 'South Goa',
@@ -151,18 +162,18 @@ export async function addBusiness(newBizData, ownerUid = null) {
     reviewsCount: 1,
     isLesserKnown: true,
     isFairVisibilityFeatured: true,
-    experiences: newBizData.experiences || [
-      { name: newBizData.category, price: price, duration: '2 Hours', per: 'per person' }
-    ],
+    experiences: Array.isArray(newBizData.experiences) && newBizData.experiences.length > 0
+      ? newBizData.experiences
+      : [{ name: newBizData.category, price: price, duration: '2 Hours', per: 'per person' }],
     services: Array.isArray(newBizData.services)
       ? newBizData.services
       : typeof newBizData.services === 'string'
       ? newBizData.services.split(',').map((s) => s.trim()).filter(Boolean)
-      : [],
+      : ['Local Goan Hospitality'],
     createdAt: serverTimestamp()
   };
 
-  // Attempt Firestore write if authenticated
+  // Write new unique listing document to Cloud Firestore
   let createdDocId = `biz-${Date.now()}`;
   try {
     const bizCollection = collection(db, COLLECTION_NAME);
@@ -178,17 +189,21 @@ export async function addBusiness(newBizData, ownerUid = null) {
     createdAt: new Date().toISOString()
   };
 
-  const updated = [createdListing, ...current];
+  // Preserve all existing listings and prepend the new one
+  const updated = [createdListing, ...current.filter((b) => b.id !== createdDocId)];
   saveBusinesses(updated);
   return createdListing;
 }
 
 /**
  * Update an existing business listing in Firestore and local storage.
- * Enforces ownership on update.
+ * Enforces ownership on update and guarantees ownerUid cannot be transferred.
  */
 export async function updateBusiness(id, updatedData, currentUid = null) {
   const current = getBusinesses();
+
+  // Strip immutable security fields from update payload
+  const { ownerUid, createdAt, id: _stripId, ...safeUpdates } = updatedData;
 
   // Attempt Firestore update
   try {
@@ -196,12 +211,12 @@ export async function updateBusiness(id, updatedData, currentUid = null) {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const existing = docSnap.data();
-      // Ensure owner matches
+      // Ensure owner matches authenticated user
       if (currentUid && existing.ownerUid && existing.ownerUid !== currentUid) {
         throw new Error('Permission denied: You do not own this listing.');
       }
       await updateDoc(docRef, {
-        ...updatedData,
+        ...safeUpdates,
         updatedAt: serverTimestamp()
       });
     }
@@ -209,7 +224,7 @@ export async function updateBusiness(id, updatedData, currentUid = null) {
     console.warn(`Firestore update for business ${id} failed (updating locally):`, e.message);
   }
 
-  const updated = current.map((b) => (b.id === id ? { ...b, ...updatedData } : b));
+  const updated = current.map((b) => (b.id === id ? { ...b, ...safeUpdates } : b));
   saveBusinesses(updated);
   return updated.find((b) => b.id === id);
 }
