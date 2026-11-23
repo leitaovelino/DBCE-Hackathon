@@ -44,32 +44,32 @@ export default function CrowdIntelligenceDashboard({
   const forecastData = useMemo(() => getDestinationForecast(selectedDestId), [selectedDestId]);
 
   return (
-    <div className="py-8 sm:py-12 bg-slate-50 min-h-[calc(100vh-80px)]">
+    <div className="py-8 sm:py-12 bg-slate-50 dark:bg-slate-950 min-h-[calc(100vh-80px)] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Top Disclaimer / Header Banner */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-4">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-4 transition-colors">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-100 text-cyan-800 text-xs font-bold rounded-full mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-100 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-300 text-xs font-bold rounded-full mb-2">
                 <Users className="w-3.5 h-3.5" />
                 <span>Crowd Analytics & Predictive Telemetry</span>
               </div>
-              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                 Crowd Intelligence Dashboard
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl">
                 Real-time estimated crowd indices, regional footfall dispersal, and hourly forecasts across all monitored tourist zones in Goa.
               </p>
             </div>
 
             {/* Sync Timestamp & Disclaimer Badge */}
             <div className="self-start md:self-auto flex flex-col items-start md:items-end gap-1.5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                 <span>Last updated: {forecastData.lastUpdated}</span>
               </div>
-              <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+              <span className="text-[11px] text-amber-700 dark:text-amber-300 font-medium flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-900/60">
                 <Info className="w-3.5 h-3.5 shrink-0" />
                 <span>{SIMULATION_NOTICE}</span>
               </span>
@@ -77,54 +77,54 @@ export default function CrowdIntelligenceDashboard({
           </div>
 
           {/* Crowd Distribution KPI Tiles */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/70">
-              <span className="text-xs text-slate-500 font-bold block">Monitored Zones</span>
-              <div className="text-2xl font-black text-slate-900 mt-1">{distribution.total} Destinations</div>
-              <span className="text-[11px] text-slate-500">North, South & Central Goa</span>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-700">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-bold block">Monitored Zones</span>
+              <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">{distribution.total} Destinations</div>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">North, South & Central Goa</span>
             </div>
 
-            <div className="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200/80">
-              <span className="text-xs text-emerald-800 font-bold block flex items-center gap-1.5">
+            <div className="bg-emerald-50/70 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/50">
+              <span className="text-xs text-emerald-800 dark:text-emerald-300 font-bold block flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-600" />
                 <span>LOW CROWD (Serene)</span>
               </span>
-              <div className="text-2xl font-black text-emerald-900 mt-1">
-                {distribution.low.count} <span className="text-sm font-semibold text-emerald-700">({distribution.low.percentage}%)</span>
+              <div className="text-2xl font-black text-emerald-900 dark:text-emerald-200 mt-1">
+                {distribution.low.count} <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">({distribution.low.percentage}%)</span>
               </div>
-              <span className="text-[11px] text-emerald-800">Ideal for peaceful visits</span>
+              <span className="text-[11px] text-emerald-800 dark:text-emerald-300">Ideal for peaceful visits</span>
             </div>
 
-            <div className="bg-amber-50/70 p-4 rounded-2xl border border-amber-200/80">
-              <span className="text-xs text-amber-800 font-bold block flex items-center gap-1.5">
+            <div className="bg-amber-50/70 dark:bg-amber-950/40 p-4 rounded-2xl border border-amber-200/80 dark:border-amber-900/50">
+              <span className="text-xs text-amber-800 dark:text-amber-300 font-bold block flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-500" />
                 <span>MODERATE CROWD</span>
               </span>
-              <div className="text-2xl font-black text-amber-900 mt-1">
-                {distribution.moderate.count} <span className="text-sm font-semibold text-amber-700">({distribution.moderate.percentage}%)</span>
+              <div className="text-2xl font-black text-amber-900 dark:text-amber-200 mt-1">
+                {distribution.moderate.count} <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">({distribution.moderate.percentage}%)</span>
               </div>
-              <span className="text-[11px] text-amber-800">Manageable foot traffic</span>
+              <span className="text-[11px] text-amber-800 dark:text-amber-300">Manageable foot traffic</span>
             </div>
 
-            <div className="bg-red-50/70 p-4 rounded-2xl border border-red-200/80">
-              <span className="text-xs text-red-800 font-bold block flex items-center gap-1.5">
+            <div className="bg-red-50/70 dark:bg-red-950/40 p-4 rounded-2xl border border-red-200/80 dark:border-red-900/50">
+              <span className="text-xs text-red-800 dark:text-red-300 font-bold block flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-red-600" />
                 <span>HIGH CROWD (Congested)</span>
               </span>
-              <div className="text-2xl font-black text-red-900 mt-1">
-                {distribution.high.count} <span className="text-sm font-semibold text-red-700">({distribution.high.percentage}%)</span>
+              <div className="text-2xl font-black text-red-900 dark:text-red-200 mt-1">
+                {distribution.high.count} <span className="text-sm font-semibold text-red-700 dark:text-red-400">({distribution.high.percentage}%)</span>
               </div>
-              <span className="text-[11px] text-red-800">Nudges active for diversion</span>
+              <span className="text-[11px] text-red-800 dark:text-red-300">Nudges active for diversion</span>
             </div>
           </div>
 
           {/* Visual Distribution Segment Bar */}
           <div className="pt-2">
-            <div className="flex items-center justify-between text-xs text-slate-500 font-semibold mb-1.5">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold mb-1.5">
               <span>Overall State Crowd Distribution</span>
               <span>100% Simulated Capacity</span>
             </div>
-            <div className="w-full h-3 rounded-full bg-slate-200 flex overflow-hidden">
+            <div className="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 flex overflow-hidden">
               <div
                 style={{ width: `${distribution.low.percentage}%` }}
                 className="bg-emerald-500 h-full transition-all"
@@ -146,17 +146,17 @@ export default function CrowdIntelligenceDashboard({
         </div>
 
         {/* Intelligent Tourist Nudges Showcase Banner */}
-        <div className="bg-gradient-to-r from-amber-50 via-teal-50 to-emerald-50 border border-teal-200 rounded-3xl p-6 sm:p-7 shadow-xs">
+        <div className="bg-gradient-to-r from-amber-50 via-teal-50 to-emerald-50 dark:from-slate-900 dark:via-teal-950/30 dark:to-slate-900 border border-teal-200 dark:border-teal-800/60 rounded-3xl p-6 sm:p-7 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2.5">
               <div className="p-2.5 rounded-xl bg-teal-600 text-white shadow-xs">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-black text-slate-900 text-base sm:text-lg">
+                <h3 className="font-black text-slate-900 dark:text-slate-100 text-base sm:text-lg">
                   Active Intelligent Tourist Nudges
                 </h3>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 dark:text-slate-300">
                   Automated congestion diversion suggestions based on simulated peak crowd thresholds
                 </p>
               </div>
@@ -175,28 +175,28 @@ export default function CrowdIntelligenceDashboard({
             {SMART_NUDGES.slice(0, 3).map((nudge) => (
               <div
                 key={nudge.id}
-                className="bg-white p-4 rounded-2xl border border-teal-200/80 shadow-xs flex flex-col justify-between"
+                className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-teal-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-[11px] font-extrabold text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
+                    <span className="text-[11px] font-extrabold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-900/50">
                       {nudge.originalName}: {nudge.originalCrowd}% HIGH
                     </span>
-                    <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/50">
                       -{nudge.crowdSavedPercent}% Crowd
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-slate-900 mb-1">{nudge.headline}</h4>
-                  <p className="text-[11px] text-slate-600 leading-relaxed mb-3">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 mb-1">{nudge.headline}</h4>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
                     {nudge.reason}
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500 font-medium">Best: {nudge.suggestedTime.split('(')[0]}</span>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">Best: {nudge.suggestedTime.split('(')[0]}</span>
                   <button
                     onClick={() => setSelectedDestId(nudge.alternativeDestId)}
-                    className="font-bold text-teal-700 hover:text-teal-900 flex items-center gap-0.5 cursor-pointer"
+                    className="font-bold text-teal-700 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 flex items-center gap-0.5 cursor-pointer"
                   >
                     <span>View {nudge.alternativeName.split(' ')[0]}</span>
                     <ArrowRight className="w-3 h-3" />
@@ -368,14 +368,14 @@ export default function CrowdIntelligenceDashboard({
         )}
 
         {/* Destination-Wise Crowd Overview Table / Grid */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6 transition-colors">
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
                 Destination-Wise Crowd Overview
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Click any row or card to update the predictive forecast graphs above
               </p>
             </div>
@@ -383,13 +383,13 @@ export default function CrowdIntelligenceDashboard({
             {/* Region & Level Filters */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Region Tabs */}
-              <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
                 {['All', 'North Goa', 'South Goa', 'Central Goa'].map((r) => (
                   <button
                     key={r}
                     onClick={() => setActiveRegion(r)}
                     className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                      activeRegion === r ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      activeRegion === r ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                     }`}
                   >
                     {r}
@@ -398,13 +398,13 @@ export default function CrowdIntelligenceDashboard({
               </div>
 
               {/* Status Filter */}
-              <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
                 {['All', 'LOW', 'MODERATE', 'HIGH'].map((lvl) => (
                   <button
                     key={lvl}
                     onClick={() => setActiveLevelFilter(lvl)}
                     className={`px-2.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-                      activeLevelFilter === lvl ? 'bg-cyan-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      activeLevelFilter === lvl ? 'bg-cyan-700 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                     }`}
                   >
                     {lvl}
@@ -422,7 +422,7 @@ export default function CrowdIntelligenceDashboard({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search destination by name or taluka..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100 focus:bg-white text-xs sm:text-sm text-slate-800 rounded-xl border border-slate-200 focus:border-cyan-500 focus:outline-hidden transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 focus:bg-white dark:focus:bg-slate-800 text-xs sm:text-sm text-slate-800 dark:text-slate-100 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-cyan-500 focus:outline-hidden transition-all"
             />
           </div>
 
@@ -438,8 +438,8 @@ export default function CrowdIntelligenceDashboard({
                   onClick={() => setSelectedDestId(dest.id)}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                     isSelected
-                      ? 'bg-cyan-50/70 border-cyan-400 shadow-md ring-2 ring-cyan-400/20'
-                      : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-xs'
+                      ? 'bg-cyan-50/70 dark:bg-cyan-950/40 border-cyan-400 dark:border-cyan-500 shadow-md ring-2 ring-cyan-400/20'
+                      : 'bg-white dark:bg-slate-850 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
                   }`}
                 >
                   <div>
@@ -447,18 +447,18 @@ export default function CrowdIntelligenceDashboard({
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${cat.bg}`}>
                         {cat.category}
                       </span>
-                      <span className="text-xs font-mono font-bold text-slate-700">
+                      <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-200">
                         {dest.crowdScore}%
                       </span>
                     </div>
 
-                    <h4 className="font-bold text-slate-900 text-sm mb-1 truncate">{dest.name}</h4>
-                    <p className="text-[11px] text-slate-500 flex items-center gap-1 mb-3">
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm mb-1 truncate">{dest.name}</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-3">
                       <MapPin className="w-3 h-3 text-slate-400" />
                       <span>{dest.region} • {dest.taluka}</span>
                     </p>
 
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 mb-2 overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
                           dest.crowdScore > 70 ? 'bg-red-500' : dest.crowdScore >= 40 ? 'bg-amber-400' : 'bg-emerald-500'
@@ -468,9 +468,9 @@ export default function CrowdIntelligenceDashboard({
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
                     <span>Est. {dest.estimatedVisitorsNow.toLocaleString()} now</span>
-                    <span className="font-semibold text-cyan-700 hover:underline">Select & Forecast →</span>
+                    <span className="font-semibold text-cyan-700 dark:text-cyan-400 hover:underline">Select & Forecast →</span>
                   </div>
                 </div>
               );

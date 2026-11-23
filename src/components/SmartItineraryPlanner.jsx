@@ -193,27 +193,27 @@ export default function SmartItineraryPlanner({
   };
 
   return (
-    <div className="py-8 sm:py-12 bg-slate-50 min-h-[calc(100vh-80px)]">
+    <div className="py-8 sm:py-12 bg-slate-50 dark:bg-slate-950 min-h-[calc(100vh-80px)] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Title Header */}
         <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-100 text-cyan-800 text-xs font-bold rounded-full mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-cyan-100 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-300 text-xs font-bold rounded-full mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
             <span>AI-Assisted Sustainable Itinerary Planner</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Smart Trip & Route Planner
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
             Generate realistic travel itineraries customized for your budget and pace. Our planner intelligently routes you away from gridlocked coastal roads to serene village and heritage locations.
           </p>
         </div>
 
         {/* Input Parameters Form Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
-          <h3 className="font-extrabold text-slate-900 text-base sm:text-lg flex items-center gap-2">
-            <Compass className="w-5 h-5 text-cyan-600" />
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6 transition-colors">
+          <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base sm:text-lg flex items-center gap-2">
+            <Compass className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
             <span>Configure Your Travel Preferences</span>
           </h3>
 
@@ -222,11 +222,11 @@ export default function SmartItineraryPlanner({
               
               {/* Duration */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Trip Duration</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Trip Duration</label>
                 <select
                   value={duration}
                   onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
                 >
                   <option value={1}>1 Day (Express Tour)</option>
                   <option value={2}>2 Days (Weekend Getaway)</option>
@@ -237,11 +237,11 @@ export default function SmartItineraryPlanner({
 
               {/* Start Location */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Starting Location</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Starting Location</label>
                 <select
                   value={startLocation}
                   onChange={(e) => setStartLocation(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
                 >
                   {SAMPLE_START_LOCATIONS.map((loc) => (
                     <option key={loc} value={loc}>{loc}</option>
@@ -251,22 +251,22 @@ export default function SmartItineraryPlanner({
 
               {/* Travel Date */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Preferred Date</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Preferred Date</label>
                 <input
                   type="date"
                   value={travelDate}
                   onChange={(e) => setTravelDate(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
                 />
               </div>
 
               {/* Budget Level */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Budget Range</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Budget Range</label>
                 <select
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-cyan-500 cursor-pointer"
                 >
                   <option value="budget">Budget (&lt; ₹1,500/day)</option>
                   <option value="moderate">Moderate (₹1,500 - ₹4,000/day)</option>
@@ -277,11 +277,11 @@ export default function SmartItineraryPlanner({
             </div>
 
             {/* Travelers & Category Selection */}
-            <div className="pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
               
               {/* Number of Travelers */}
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-700">Travelers:</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Travelers:</span>
                 {[1, 2, 4, 6].map((num) => (
                   <button
                     key={num}
@@ -290,7 +290,7 @@ export default function SmartItineraryPlanner({
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       travelers === num
                         ? 'bg-cyan-700 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
                   >
                     {num === 1 ? 'Solo' : num === 2 ? 'Couple (2)' : `${num} People`}
@@ -306,7 +306,7 @@ export default function SmartItineraryPlanner({
                   onChange={(e) => setAvoidHotspots(e.target.checked)}
                   className="w-4 h-4 text-emerald-600 rounded-sm focus:ring-emerald-500 border-slate-300"
                 />
-                <span className="text-xs font-bold text-emerald-800">
+                <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
                   Prioritize Low-Crowd Alternatives & Avoid Peak Choke-Points
                 </span>
               </label>
@@ -315,7 +315,7 @@ export default function SmartItineraryPlanner({
 
             {/* Experience Category Pills */}
             <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-500 block">Preferred Experience Categories:</span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 block">Preferred Experience Categories:</span>
               <div className="flex flex-wrap gap-2">
                 {EXPERIENCE_CATEGORIES.map((cat) => {
                   const isSelected = selectedCategories.includes(cat);
@@ -327,7 +327,7 @@ export default function SmartItineraryPlanner({
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
                           ? 'bg-teal-700 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -454,7 +454,7 @@ export default function SmartItineraryPlanner({
                 className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
                   activeDayTab === day.dayNumber
                     ? 'bg-cyan-700 text-white shadow-md'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750 border border-slate-200 dark:border-slate-700'
                 }`}
               >
                 <span>Day {day.dayNumber}</span>
@@ -464,7 +464,7 @@ export default function SmartItineraryPlanner({
 
             <button
               onClick={() => setAddDestinationModalDay(activeDayTab)}
-              className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Add Stop</span>
@@ -473,10 +473,10 @@ export default function SmartItineraryPlanner({
 
           {/* Current Day Title */}
           <div className="flex items-center justify-between">
-            <h4 className="text-lg font-bold text-slate-900">
+            <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">
               Day {currentDay.dayNumber}: {currentDay.title}
             </h4>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               {currentDay.stops.length} scheduled visits
             </span>
           </div>
@@ -484,9 +484,9 @@ export default function SmartItineraryPlanner({
           {/* Stops List */}
           <div className="space-y-4">
             {currentDay.stops.length === 0 ? (
-              <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
+              <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
                 <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
-                <h5 className="font-bold text-slate-800">No stops scheduled for this day</h5>
+                <h5 className="font-bold text-slate-800 dark:text-slate-200">No stops scheduled for this day</h5>
                 <button
                   onClick={() => setAddDestinationModalDay(currentDay.dayNumber)}
                   className="px-4 py-2 bg-cyan-700 text-white rounded-xl text-xs font-bold cursor-pointer"
@@ -504,11 +504,11 @@ export default function SmartItineraryPlanner({
                   <div key={stop.id} className="space-y-2">
                     
                     {/* Destination Card Row */}
-                    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-cyan-400 transition-all">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-cyan-400 dark:hover:border-cyan-500 transition-all">
                       
                       {/* Left: Step number, Photo, Details */}
                       <div className="flex items-start gap-4 flex-1">
-                        <div className="w-8 h-8 rounded-full bg-cyan-100 text-cyan-800 font-black text-xs flex items-center justify-center shrink-0 mt-1">
+                        <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-300 font-black text-xs flex items-center justify-center shrink-0 mt-1">
                           {idx + 1}
                         </div>
 
@@ -522,38 +522,38 @@ export default function SmartItineraryPlanner({
                           <div className="flex flex-wrap items-center gap-2">
                             <h5
                               onClick={() => onSelectDestinationModal(dest)}
-                              className="font-extrabold text-sm sm:text-base text-slate-900 hover:text-cyan-700 transition-colors cursor-pointer"
+                              className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100 hover:text-cyan-700 dark:hover:text-cyan-400 transition-colors cursor-pointer"
                             >
                               {dest.name}
                             </h5>
                             <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
-                              stop.crowdCategory === 'HIGH' ? 'bg-red-50 text-red-700 border-red-200' :
-                              stop.crowdCategory === 'MODERATE' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                              'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              stop.crowdCategory === 'HIGH' ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900/50' :
+                              stop.crowdCategory === 'MODERATE' ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900/50' :
+                              'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50'
                             }`}>
                               {stop.crowdCategory} CROWD ({dest.crowdScore}%)
                             </span>
                           </div>
 
-                          <p className="text-xs text-slate-500 flex items-center gap-1">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                             <MapPin className="w-3.5 h-3.5 text-slate-400" />
                             <span>{dest.region} • {dest.category}</span>
                           </p>
 
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 pt-1">
-                            <span className="flex items-center gap-1 font-semibold text-cyan-800">
-                              <Clock className="w-3.5 h-3.5 text-cyan-600" />
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-300 pt-1">
+                            <span className="flex items-center gap-1 font-semibold text-cyan-800 dark:text-cyan-300">
+                              <Clock className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                               <span>{stop.suggestedTime}</span>
                             </span>
                             <span>Duration: {stop.duration}</span>
-                            <span className="font-semibold text-slate-700">Est. ₹{stop.estimatedExpense} total</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-200">Est. ₹{stop.estimatedExpense} total</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Right: Actions */}
-                      <div className="flex items-center justify-between md:justify-end gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0">
-                        <span className="text-[11px] text-slate-500 font-medium">
+                      <div className="flex items-center justify-between md:justify-end gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800 shrink-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                           Next: {
                             routeData?.available && routeData.segments && routeData.segments[idx + 1]
                               ? `${routeData.segments[idx + 1].distanceKm} km drive (~${routeData.segments[idx + 1].durationMinutes} mins via ORS)`
@@ -564,13 +564,13 @@ export default function SmartItineraryPlanner({
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => onSelectDestinationModal(dest)}
-                            className="p-2 text-cyan-700 hover:bg-cyan-50 rounded-xl transition-colors cursor-pointer text-xs font-bold"
+                            className="p-2 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer text-xs font-bold"
                           >
                             Details
                           </button>
                           <button
                             onClick={() => handleRemoveStop(currentDay.dayNumber, stop.id)}
-                            className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                            className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Remove stop"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -582,14 +582,14 @@ export default function SmartItineraryPlanner({
 
                     {/* Proactive Tourist Nudge if stop has High Crowd */}
                     {isHighCrowd && matchingNudge && (
-                      <div className="ml-6 sm:ml-12 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                        <div className="flex items-start gap-2.5 text-amber-900">
-                          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="ml-6 sm:ml-12 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-start gap-2.5 text-amber-900 dark:text-amber-200">
+                          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                           <div>
                             <span className="font-bold block">
                               Intelligent Nudge: High Crowd Anticipated at {dest.name}
                             </span>
-                            <span className="text-slate-600 text-[11px]">
+                            <span className="text-slate-600 dark:text-slate-300 text-[11px]">
                               {matchingNudge.reason}
                             </span>
                           </div>
@@ -618,15 +618,15 @@ export default function SmartItineraryPlanner({
       {/* Add Destination Modal */}
       {addDestinationModalDay !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[80vh] flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[80vh] flex flex-col justify-between transition-colors">
             <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <h4 className="font-bold text-slate-900 text-base">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 text-base">
                   Add Destination to Day {addDestinationModalDay}
                 </h4>
                 <button
                   onClick={() => setAddDestinationModalDay(null)}
-                  className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -637,7 +637,7 @@ export default function SmartItineraryPlanner({
                   <div
                     key={dest.id}
                     onClick={() => handleAddStopToDay(dest, addDestinationModalDay)}
-                    className="p-2.5 rounded-xl border border-slate-100 hover:border-cyan-300 hover:bg-cyan-50/50 transition-all flex items-center justify-between cursor-pointer group"
+                    className="p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-cyan-300 dark:hover:border-cyan-500 hover:bg-cyan-50/50 dark:hover:bg-cyan-950/30 transition-all flex items-center justify-between cursor-pointer group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <img
@@ -646,30 +646,30 @@ export default function SmartItineraryPlanner({
                         className="w-12 h-12 rounded-lg object-cover shrink-0"
                       />
                       <div className="truncate">
-                        <h5 className="font-bold text-xs text-slate-800 group-hover:text-cyan-800 truncate">
+                        <h5 className="font-bold text-xs text-slate-800 dark:text-slate-100 group-hover:text-cyan-800 dark:group-hover:text-cyan-400 truncate">
                           {dest.name}
                         </h5>
-                        <span className="text-[10px] text-slate-500">{dest.region} • {dest.category}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">{dest.region} • {dest.category}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        dest.crowdScore > 70 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'
+                        dest.crowdScore > 70 ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
                       }`}>
                         {dest.crowdScore}%
                       </span>
-                      <Plus className="w-4 h-4 text-cyan-600" />
+                      <Plus className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 text-right">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-right">
               <button
                 onClick={() => setAddDestinationModalDay(null)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
               >
                 Cancel
               </button>
