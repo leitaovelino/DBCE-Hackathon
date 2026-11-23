@@ -103,7 +103,7 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
     throw err;
   }
 
-  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   // Models to attempt in order of preference for high resilience
   const candidateModels = Array.from(new Set([
     primaryModel,
@@ -164,7 +164,13 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
       console.warn(`[Gemini] Model ${modelToTry} failed (${apiError.status || apiError.message}). Trying next candidate...`);
 
       // If invalid API key, don't bother retrying other models
-      if (apiError.status === 400 || apiError.message?.includes('API_KEY_INVALID')) {
+      if (
+        apiError.status === 400 || 
+        apiError.status === 401 || 
+        apiError.message?.includes('API_KEY_INVALID') || 
+        apiError.message?.includes('UNAUTHENTICATED') ||
+        apiError.message?.includes('API key not valid')
+      ) {
         throw new Error('INVALID_API_KEY');
       }
     }
