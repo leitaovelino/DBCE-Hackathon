@@ -1,30 +1,73 @@
 import { DESTINATIONS } from '../data/destinations';
 
+const BACKEND_CHAT_URL = 'http://localhost:5000/api/chat';
+
 /**
  * AI Tourism Companion Service
- * Formatted to seamlessly connect to backend Google Gemini API:
- * Endpoint: POST /api/ai/companion
- * Currently uses intelligent local reasoning & Goan knowledge heuristics.
+ * Connects to the GoaSmart Express + Google Gemini AI Backend.
+ * Includes graceful heuristic fallback if the local backend server is offline.
  */
-
 export async function sendChatMessage(userMessage, conversationHistory = []) {
-  // Simulate network latency for realistic AI generation feel
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  // 1. Attempt connection to the Gemini Backend
+  try {
+    const response = await fetch(BACKEND_CHAT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        conversationHistory: conversationHistory.map((m) => ({
+          sender: m.sender,
+          text: m.text
+        }))
+      })
+    });
 
+    const data = await response.json();
+
+    if (response.ok && data.success && data.response) {
+      return {
+        text: data.response.text,
+        recommendedDestinations: data.response.recommendedDestinations || []
+      };
+    }
+
+    if (!response.ok) {
+      // Backend returned a specific error message
+      if (data.error) {
+        throw new Error(data.error);
+      }
+    }
+  } catch (netErr) {
+    // If backend refused connection (server not running), fall back gracefully to local knowledge engine
+    if (netErr.message && (netErr.message.includes('Failed to fetch') || netErr.name === 'TypeError')) {
+      console.info('Gemini backend server (port 5000) offline. Running local Goan knowledge engine fallback.');
+      return getLocalHeuristicResponse(userMessage);
+    }
+    // Re-throw specific API errors (e.g., quota, invalid key)
+    throw netErr;
+  }
+
+  // Fallback to local heuristic engine
+  return getLocalHeuristicResponse(userMessage);
+}
+
+/**
+ * Intelligent Local Goan Knowledge Engine (Fallback when backend is offline)
+ */
+function getLocalHeuristicResponse(userMessage) {
   const text = userMessage.toLowerCase().trim();
 
-  // 1. Check for specific question: Best beaches / Peaceful beaches
+  // 1. Best beaches / Peaceful beaches
   if (text.includes('best beach') || text.includes('peaceful beach') || text.includes('quiet beach') || text.includes('peaceful')) {
-    const quietBeaches = DESTINATIONS.filter(
-      (d) => d.mapCategory === 'Beaches' || d.category.includes('Quiet') || d.id === 'cola-beach' || d.id === 'galgibaga-beach'
-    );
     return {
-      text: `Based on current crowd estimation data, popular beaches like **Baga (92% crowd)** and **Calangute (89% crowd)** are experiencing severe tourist congestion. \n\nFor a truly peaceful, pristine experience, I strongly recommend:\n- **Galgibaga Beach (18% crowd)**: Strictly protected Olive Ridley turtle nesting sanctuary with calm pine groves and zero commercial noise.\n- **Cola Beach & Lagoon (24% crowd)**: Unique emerald freshwater lagoon meeting golden sand, ideal for tranquil kayaking.\n- **Butterfly Beach**: A secluded, crescent cove with dolphins and crystal clear water.`,
+      text: `Based on current crowd estimation telemetry, popular beaches like **Baga (92% crowd)** and **Calangute (89% crowd)** are experiencing severe tourist congestion. \n\nFor a truly peaceful, pristine experience, I strongly recommend:\n- **Galgibaga Beach (18% crowd)**: Strictly protected Olive Ridley turtle nesting sanctuary with calm pine groves and zero commercial noise.\n- **Cola Beach & Lagoon (24% crowd)**: Unique emerald freshwater lagoon meeting golden sand, ideal for tranquil kayaking.\n- **Butterfly Beach**: A secluded, crescent cove with dolphins and crystal clear water.`,
       recommendedDestinations: ['galgibaga-beach', 'cola-beach', 'butterfly-beach']
     };
   }
 
-  // 2. Budget & Seafood request (as specified in Master Prompt: "I want a peaceful beach day with good seafood and a budget of ₹1500")
+  // 2. Budget & Seafood request
   if (text.includes('seafood') || text.includes('budget') || text.includes('1500') || text.includes('food')) {
     return {
       text: `Here is a custom, crowd-conscious Goan plan for ₹1,500:\n\n1. **Destination**: Head to **Galgibaga Beach** in South Goa (Current crowd: only 18%). Unlike Baga where parking alone takes 45 mins, you will enjoy peaceful silver sands.\n2. **Authentic Goan Seafood**: Stop by local family-run beach eateries right beside the estuary for traditional Goan Fish Thali (Kingfish/Surmai fry, Tisreo clams, Solkadhi) for ₹280 - ₹350 per person.\n3. **Afternoon Activity**: Rent a quiet freshwater kayak at neighboring **Cola Lagoon** (~₹200).\n4. **Budget Breakdown**: Fuel & Travel: ₹450 | Meal & Refreshment: ₹650 | Kayaking: ₹200 | Total: **₹1,300** (Well within ₹1,500).\n\nWhy this works: You bypass commercial shack markups and directly support local Canacona village families!`,
@@ -32,7 +75,7 @@ export async function sendChatMessage(userMessage, conversationHistory = []) {
     };
   }
 
-  // 3. Hidden places / Offbeat / Hidden gems
+  // 3. Hidden places / Offbeat
   if (text.includes('hidden') || text.includes('offbeat') || text.includes('secret') || text.includes('gem')) {
     return {
       text: `Goa holds extraordinary secrets away from the crowded coastal belt:\n\n1. **Divar Island**: A serene river island accessed via government ferry across the Mandovi. Features pastel Portuguese manors, paddy dikes, and zero traffic.\n2. **Tambdi Surla 12th-C Temple**: The oldest active Kadamba black basalt rock temple hidden in the deep Western Ghats jungle.\n3. **Netravali Bubbling Lake**: A sacred stepped pond where bubbles spontaneously rise to the surface when you clap, surrounded by organic spice plantations.\n4. **Chorao Island & Mangroves**: Silent canoe safaris through the Dr. Salim Ali Bird Sanctuary.`,
@@ -48,7 +91,7 @@ export async function sendChatMessage(userMessage, conversationHistory = []) {
     };
   }
 
-  // 5. Goan Culture & Heritage / Religious
+  // 5. Goan Culture & Heritage
   if (text.includes('culture') || text.includes('heritage') || text.includes('church') || text.includes('temple') || text.includes('history')) {
     return {
       text: `To experience authentic Goan heritage:\n\n- **Old Goa UNESCO Precinct**: Visit **Basilica of Bom Jesus** and the colossal **Se Cathedral** with its Golden Bell.\n- **Goan Hindu Architecture**: Explore **Shri Mangesh Temple in Priol, Ponda**, celebrated for its 7-storey octagonal lamp tower (Deepstambha).\n- **Latin Heritage**: Walk through **Fontainhas Latin Quarter** with pastel residences from the Portuguese colonial era.\n- **Ancient Antiquity**: **Tambdi Surla Temple**—Goa's only intact pre-Portuguese Kadamba monument.`,

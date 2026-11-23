@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "server": "node server/index.js",
+    "test:backend": "cd server && node testBackend.js",
     "test:security": "node scripts/testSecurityRules.js"
   },
   "dependencies": {
