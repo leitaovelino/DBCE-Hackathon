@@ -10,12 +10,17 @@ import BusinessPortalPreview from './components/BusinessPortalPreview';
 import AuthorityDashboardPreview from './components/AuthorityDashboardPreview';
 import Footer from './components/Footer';
 
+// Phase 2 Modules
+import AIChatbot from './components/AIChatbot';
+import InteractiveMap from './components/InteractiveMap';
+import SmartRecommendations from './components/SmartRecommendations';
+
 import { DESTINATIONS } from './data/destinations';
 import { translations } from './data/translations';
 
 export default function App() {
   const [currentLang, setLang] = useState('en');
-  const [activeView, setActiveView] = useState('tourist'); // 'tourist', 'business', 'authority'
+  const [activeView, setActiveView] = useState('tourist'); // 'tourist', 'map', 'recommendations', 'companion', 'business', 'authority'
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeRegion, setActiveRegion] = useState('All');
@@ -60,29 +65,36 @@ export default function App() {
     const found = DESTINATIONS.find((d) => d.id === id);
     if (found) {
       setSelectedDestination(found);
-      setActiveView('tourist');
     }
   };
 
   const handleScrollToExplore = () => {
     setActiveView('tourist');
-    const elem = document.getElementById('explore-section');
-    if (elem) {
-      elem.scrollIntoView({ behavior: 'smooth' });
-    }
+    setTimeout(() => {
+      const elem = document.getElementById('explore-section');
+      if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 50);
   };
 
   const handleFilterVibe = (tagOrCategory) => {
     setActiveView('tourist');
-    if (tagOrCategory === 'Eco-Tourism & Quiet Beach' || tagOrCategory === 'Heritage & Culture' || tagOrCategory === 'Waterfall & Nature') {
+    if (
+      tagOrCategory === 'Eco-Tourism & Quiet Beach' ||
+      tagOrCategory === 'Heritage & Culture' ||
+      tagOrCategory === 'Waterfall & Nature'
+    ) {
       setActiveCategory(tagOrCategory);
     } else {
       setSearchQuery(tagOrCategory);
     }
-    const elem = document.getElementById('explore-section');
-    if (elem) {
-      elem.scrollIntoView({ behavior: 'smooth' });
-    }
+    setTimeout(() => {
+      const elem = document.getElementById('explore-section');
+      if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 50);
   };
 
   return (
@@ -107,18 +119,21 @@ export default function App() {
 
       {/* Main View Router */}
       <main className="flex-1">
+        {/* View 1: Phase 1 Tourist Home & Explorer */}
         {activeView === 'tourist' && (
           <>
-            {/* Hero Section with Quick Search */}
             <Hero
               t={t}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               onExploreClick={handleScrollToExplore}
+              onAiClick={() => {
+                setActiveView('companion');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               onFilterVibe={handleFilterVibe}
             />
 
-            {/* Tourist Destination Explorer & Crowd Grid */}
             <TouristDashboard
               destinations={DESTINATIONS}
               savedFavorites={savedFavorites}
@@ -133,17 +148,46 @@ export default function App() {
               t={t}
             />
 
-            {/* Why GoaSmart Value Proposition */}
             <WhyGoaSmart />
           </>
         )}
 
+        {/* View 2: Phase 2 Interactive Goa Map */}
+        {activeView === 'map' && (
+          <InteractiveMap
+            onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
+            savedFavorites={savedFavorites}
+            onToggleFavorite={handleToggleFavorite}
+            t={t}
+          />
+        )}
+
+        {/* View 3: Phase 2 Smart Destination Recommendations */}
+        {activeView === 'recommendations' && (
+          <SmartRecommendations
+            savedFavorites={savedFavorites}
+            onToggleFavorite={handleToggleFavorite}
+            onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
+            t={t}
+          />
+        )}
+
+        {/* View 4: Phase 2 AI Tourism Companion Chatbot */}
+        {activeView === 'companion' && (
+          <AIChatbot
+            onSelectDestination={(dest) => setSelectedDestination(dest)}
+            onBackToExplore={() => setActiveView('tourist')}
+          />
+        )}
+
+        {/* View 5: Local Business Portal Preview */}
         {activeView === 'business' && (
           <BusinessPortalPreview
             onBackToExplore={() => setActiveView('tourist')}
           />
         )}
 
+        {/* View 6: Tourism Authority Analytics Preview */}
         {activeView === 'authority' && (
           <AuthorityDashboardPreview
             onBackToExplore={() => setActiveView('tourist')}
@@ -151,7 +195,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Destination Deep-Dive Modal */}
+      {/* Destination Deep-Dive Modal (Universally available across all views) */}
       {selectedDestination && (
         <DestinationModal
           destination={selectedDestination}
