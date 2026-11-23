@@ -1,5 +1,5 @@
-import React from 'react';
-import { ShieldAlert, Lock, ArrowRight, Compass, LogIn, AlertTriangle, Building2, ShieldCheck, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldAlert, Lock, ArrowRight, Compass, LogIn, AlertTriangle, Building2, ShieldCheck, User, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedAccessGuard({
@@ -7,10 +7,39 @@ export default function ProtectedAccessGuard({
   onOpenAuth,
   onBackToExplore
 }) {
-  const { user, userProfile, isAuthenticated, logout } = useAuth();
+  const { user, userProfile, role, isAuthenticated, loading, hasAuthorityClaim, logout, refreshAuthorityToken } = useAuth();
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
 
-  const getRoleDetails = (role) => {
-    switch (role) {
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-10 h-10 border-3 border-cyan-500 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Verifying security credentials & claims...</p>
+      </div>
+    );
+  }
+
+  const handleSyncClaims = async () => {
+    setSyncing(true);
+    setSyncMsg('');
+    try {
+      const isClaimed = await refreshAuthorityToken();
+      if (isClaimed) {
+        setSyncMsg('Verified Authority Custom Claim loaded successfully! Reloading...');
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        setSyncMsg('Token refreshed: No Authority Custom Claim found on Firebase Auth. Please verify with administrator.');
+      }
+    } catch (err) {
+      setSyncMsg('Error refreshing token: ' + (err.message || String(err)));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const getRoleDetails = (targetRole) => {
+    switch (targetRole) {
       case 'business_owner':
         return {
           title: 'Local Business Portal',
@@ -29,7 +58,7 @@ export default function ProtectedAccessGuard({
           bgColor: 'bg-blue-50 dark:bg-blue-950/30',
           borderColor: 'border-blue-200 dark:border-blue-900/50',
           badgeColor: 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-          description: 'This area is strictly restricted to authorized Goa Tourism Department officials and Department of Tourism telemetry administrators.'
+          description: 'This area is strictly restricted to authorized Goa Tourism Department officials with verified cryptographic Custom Claims.'
         };
       default:
         return {
@@ -45,6 +74,79 @@ export default function ProtectedAccessGuard({
   };
 
   const details = getRoleDetails(requiredRole);
+
+  const getSpecificDenialExplanation = () => {
+    if (!isAuthenticated) {
+      return (
+        <>
+          You must sign in with an authorized account to access the{' '}
+          <strong className="text-slate-900 dark:text-white">{details.title}</strong>.
+        </>
+      );
+    }
+
+    if (requiredRole === 'authority') {
+      if (userProfile?.role === 'business_owner') {
+        return (
+          <>
+            Your account is currently logged in as a{' '}
+            <strong className="text-slate-900 dark:text-white uppercase">Business Owner</strong>.
+            The Tourism Authority Command Center is strictly restricted to verified government officials and cannot be accessed with a Business Owner account.
+          </>
+        );
+      }
+      if (userProfile?.role === 'tourist') {
+        return (
+          <>
+            Your account is currently logged in as a{' '}
+            <strong className="text-slate-900 dark:text-white uppercase">Tourist</strong>.
+            The Tourism Authority Command Center is strictly restricted to verified government officials and cannot be accessed with a Tourist account.
+          </>
+        );
+      }
+      if (!hasAuthorityClaim) {
+        return (
+          <>
+            Your Firestore profile is marked as authority, but your Firebase Authentication ID Token lacks the cryptographically signed Custom Claim{' '}
+            <code className="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">role: "authority"</code>.
+            Please click <strong className="text-cyan-700 dark:text-cyan-400">Sync Claims</strong> below to refresh your credentials or contact an administrator.
+          </>
+        );
+      }
+    }
+
+    if (requiredRole === 'business_owner') {
+      if (userProfile?.role === 'authority' || hasAuthorityClaim) {
+        return (
+          <>
+            Your account is logged in as a{' '}
+            <strong className="text-slate-900 dark:text-white uppercase">Tourism Authority Official</strong>.
+            Authority accounts monitor state-wide telemetry and do not have access to individual business listing management.
+          </>
+        );
+      }
+      if (userProfile?.role === 'tourist') {
+        return (
+          <>
+            Your account is currently logged in as a{' '}
+            <strong className="text-slate-900 dark:text-white uppercase">Tourist</strong>.
+            To manage listings on the Local Business Marketplace, please register or switch to a Local Business Partner account.
+          </>
+        );
+      }
+    }
+
+    return (
+      <>
+        Your account is logged in as{' '}
+        <span className="font-bold text-slate-900 dark:text-white uppercase">
+          {userProfile?.role || 'Guest'}
+        </span>
+        , which does not have permission to view the{' '}
+        <strong className="text-slate-900 dark:text-white">{details.title}</strong>.
+      </>
+    );
+  };
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-slate-50/50 dark:bg-slate-950/50 transition-colors">
@@ -69,23 +171,16 @@ export default function ProtectedAccessGuard({
           {!isAuthenticated ? 'Sign In Required' : 'Insufficient Permissions'}
         </h2>
 
-        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-md mx-auto mb-6">
-          {!isAuthenticated ? (
-            <>
-              You must sign in with a verified account to view the{' '}
-              <strong className="text-slate-900 dark:text-white">{details.title}</strong>.
-            </>
-          ) : (
-            <>
-              Your account is logged in as{' '}
-              <span className="font-bold text-slate-900 dark:text-white uppercase">
-                {userProfile?.role || 'Tourist'}
-              </span>
-              , which does not have permission to view the{' '}
-              <strong className="text-slate-900 dark:text-white">{details.title}</strong>.
-            </>
-          )}
-        </p>
+        <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-md mx-auto mb-6">
+          {getSpecificDenialExplanation()}
+        </div>
+
+        {syncMsg && (
+          <div className="mb-6 p-3 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 text-cyan-800 dark:text-cyan-300 text-xs font-semibold flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
+            <span>{syncMsg}</span>
+          </div>
+        )}
 
         {/* Role Requirement Box */}
         <div className={`p-4 rounded-xl border text-left mb-6 ${details.bgColor} ${details.borderColor}`}>
@@ -130,6 +225,17 @@ export default function ProtectedAccessGuard({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {isAuthenticated && requiredRole === 'authority' && (
+            <button
+              onClick={handleSyncClaims}
+              disabled={syncing}
+              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+              <span>{syncing ? 'Verifying Token...' : 'Sync Claims from Firebase'}</span>
+            </button>
+          )}
+
           {!isAuthenticated ? (
             <button
               onClick={() => onOpenAuth && onOpenAuth('login')}

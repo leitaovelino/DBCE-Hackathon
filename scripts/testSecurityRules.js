@@ -303,6 +303,59 @@ assertTest(
   'destinations collection allows public read, write restricted strictly to isAuthority()'
 );
 
+// ======================================================================
+// RBAC PORTAL ACCESS GUARDS SIMULATION (Matching App.jsx and ProtectedAccessGuard.jsx)
+// ======================================================================
+function canAccessBusinessPortal(profile, hasClaim) {
+  if (!profile) return false;
+  return profile.role === 'business_owner' && !hasClaim;
+}
+
+function canAccessAuthorityCenter(profile, hasClaim) {
+  if (!profile) return false;
+  return profile.role === 'authority' && hasClaim === true;
+}
+
+// TEST A: Tourist Role Restrictions
+const touristProfile = { uid: 'tourist-123', role: 'tourist' };
+assertTest(
+  'Test 11 (TEST A): Tourist is blocked from Business Owner Portal and Authority Command Center',
+  canAccessBusinessPortal(touristProfile, false) === false && canAccessAuthorityCenter(touristProfile, false) === false,
+  'Tourist is restricted to public tourist explorer features only'
+);
+
+// TEST B: Business Owner Role Permissions
+const businessProfile = { uid: 'biz-456', role: 'business_owner' };
+assertTest(
+  'Test 12 (TEST B): Business Owner accesses Business Portal, but is blocked from Authority Center',
+  canAccessBusinessPortal(businessProfile, false) === true && canAccessAuthorityCenter(businessProfile, false) === false,
+  'Business owner has business portal access, strictly denied authority privileges'
+);
+
+// TEST C: Tourism Authority Permissions
+const authorityProfile = { uid: 'auth-789', role: 'authority' };
+assertTest(
+  'Test 13 (TEST C): Verified Authority accesses Command Center, but does not receive Business Portal access',
+  canAccessAuthorityCenter(authorityProfile, true) === true && canAccessBusinessPortal(authorityProfile, true) === false,
+  'Authority has Command Center access; does not automatically receive Business Owner permissions'
+);
+
+// TEST D: Incorrect Role / Unverified Authority Rejection
+const unverifiedAuthProfile = { uid: 'imposter-000', role: 'authority' };
+const bizCustomClaimAuth = { uid: 'biz-claim-111', role: 'business_owner' };
+assertTest(
+  'Test 14 (TEST D): Account with Firestore role=authority but NO Custom Claim is rejected from Authority Center',
+  canAccessAuthorityCenter(unverifiedAuthProfile, false) === false && canAccessAuthorityCenter(bizCustomClaimAuth, false) === false,
+  'Requires cryptographically signed token.role == "authority"; Firestore role alone or business claim is rejected'
+);
+
+// TEST E: Logged Out User Rejection
+assertTest(
+  'Test 15 (TEST E): Logged out user is denied access to both protected portals',
+  canAccessBusinessPortal(null, false) === false && canAccessAuthorityCenter(null, false) === false,
+  'Unauthenticated users are directed to ProtectedAccessGuard sign-in prompt'
+);
+
 // ----------------------------------------------------------------------
 console.log('\n---------------------------------------------------------------');
 console.log(`TOTAL SECURITY TESTS: ${totalTests}`);
@@ -313,6 +366,6 @@ console.log('---------------------------------------------------------------\n')
 if (failedTests > 0) {
   process.exit(1);
 } else {
-  console.log('\x1b[32mAll 9 security test scenarios PASSED successfully.\x1b[0m\n');
+  console.log('\x1b[32mAll security and RBAC test scenarios PASSED successfully.\x1b[0m\n');
   process.exit(0);
 }

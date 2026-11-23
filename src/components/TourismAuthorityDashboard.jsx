@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ShieldAlert, ShieldCheck, Activity, BarChart3, TrendingDown, TrendingUp, Users, MapPin, AlertTriangle, ArrowRight, CheckCircle2, Filter, Info, Compass, Layers, LogOut } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Activity, BarChart3, TrendingDown, TrendingUp, Users, MapPin, AlertTriangle, ArrowRight, CheckCircle2, Filter, Info, Compass, Layers, LogOut, Sparkles } from 'lucide-react';
 import { DESTINATIONS } from '../data/destinations';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -44,26 +44,37 @@ export default function TourismAuthorityDashboard({
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center: [15.35, 73.95],
-        zoom: 10,
-        minZoom: 9,
-        maxZoom: 18,
-        scrollWheelZoom: true
-      });
+      if (mapContainerRef.current._leaflet_id) {
+        mapContainerRef.current._leaflet_id = null;
+      }
+      try {
+        const map = L.map(mapContainerRef.current, {
+          center: [15.35, 73.95],
+          zoom: 10,
+          minZoom: 9,
+          maxZoom: 18,
+          scrollWheelZoom: true
+        });
 
-      // Standard OpenStreetMap tiles (100% free, no API key required)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
-      }).addTo(map);
+        // Standard OpenStreetMap tiles (100% free, no API key required)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19
+        }).addTo(map);
 
-      mapInstanceRef.current = map;
+        mapInstanceRef.current = map;
+      } catch (err) {
+        console.warn('Leaflet initialization warning:', err);
+      }
     }
 
     return () => {
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          console.warn('Leaflet cleanup warning:', e);
+        }
         mapInstanceRef.current = null;
       }
     };
@@ -312,11 +323,13 @@ export default function TourismAuthorityDashboard({
                 <div className="grid grid-cols-2 gap-2 text-xs bg-slate-950 p-3 rounded-xl border border-slate-800">
                   <div>
                     <span className="text-slate-500 block text-[10px]">Simulated Active Visitors</span>
-                    <span className="text-sm font-bold text-white">{selectedDestination.estimatedVisitorsNow.toLocaleString()}</span>
+                    <span className="text-sm font-bold text-white">{(selectedDestination.estimatedVisitorsNow ?? 0).toLocaleString()}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[10px]">Peak Congestion Hours</span>
-                    <span className="text-xs font-semibold text-amber-400">{selectedDestination.peakHours.split('(')[0]}</span>
+                    <span className="text-xs font-semibold text-amber-400">
+                      {selectedDestination.peakHours ? selectedDestination.peakHours.split('(')[0] : '10:00 AM - 06:00 PM'}
+                    </span>
                   </div>
                 </div>
 
