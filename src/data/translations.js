@@ -9,8 +9,9 @@ export const translations = {
       itinerary: 'Smart Itinerary',
       map: 'Goa Map',
       recommendations: 'Recommendations',
+      marketplace: 'Marketplace',
       companion: 'AI Companion',
-      business: 'Local Business Portal',
+      business: 'Business Portal',
       authority: 'Tourism Authority',
       favorites: 'Saved Places'
     },
@@ -73,8 +74,9 @@ export const translations = {
       itinerary: 'स्मार्ट यात्रा',
       map: 'गोवा मानचित्र',
       recommendations: 'सुझाव',
+      marketplace: 'स्थानीय बाज़ार',
       companion: 'एआई साथी',
-      business: 'स्थानीय व्यापार',
+      business: 'व्यापार पोर्टल',
       authority: 'पर्यटन प्राधिकरण',
       favorites: 'पसंदीदा स्थान'
     },
@@ -137,8 +139,9 @@ export const translations = {
       itinerary: 'हुशार येवजण',
       map: 'गोंयचो नसो',
       recommendations: 'सल्ले',
+      marketplace: 'स्थानिक बाजार',
       companion: 'एआय वांगडी',
-      business: 'स्थानिक वेपार',
+      business: 'वेपार पोर्टल',
       authority: 'पर्यटन म्हामंडळ',
       favorites: 'आवडते सुवाती'
     },

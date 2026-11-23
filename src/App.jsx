@@ -6,8 +6,6 @@ import TouristDashboard from './components/TouristDashboard';
 import DestinationModal from './components/DestinationModal';
 import FavoritesDrawer from './components/FavoritesDrawer';
 import WhyGoaSmart from './components/WhyGoaSmart';
-import BusinessPortalPreview from './components/BusinessPortalPreview';
-import AuthorityDashboardPreview from './components/AuthorityDashboardPreview';
 import Footer from './components/Footer';
 
 // Phase 2 Modules
@@ -19,12 +17,17 @@ import SmartRecommendations from './components/SmartRecommendations';
 import CrowdIntelligenceDashboard from './components/CrowdIntelligenceDashboard';
 import SmartItineraryPlanner from './components/SmartItineraryPlanner';
 
+// Phase 4 Modules
+import LocalBusinessMarketplace from './components/LocalBusinessMarketplace';
+import BusinessOwnerDashboard from './components/BusinessOwnerDashboard';
+import TourismAuthorityDashboard from './components/TourismAuthorityDashboard';
+
 import { DESTINATIONS } from './data/destinations';
 import { translations } from './data/translations';
 
 export default function App() {
   const [currentLang, setLang] = useState('en');
-  const [activeView, setActiveView] = useState('tourist'); // 'tourist', 'crowd', 'itinerary', 'map', 'recommendations', 'companion', 'business', 'authority'
+  const [activeView, setActiveView] = useState('tourist'); // 'tourist', 'crowd', 'itinerary', 'map', 'recommendations', 'marketplace', 'companion', 'business', 'authority'
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeRegion, setActiveRegion] = useState('All');
@@ -200,7 +203,18 @@ export default function App() {
           />
         )}
 
-        {/* View 6: Phase 2 AI Tourism Companion Chatbot */}
+        {/* View 6: Phase 4 Local Business Marketplace */}
+        {activeView === 'marketplace' && (
+          <LocalBusinessMarketplace
+            onSelectBusinessOwnerPortal={() => {
+              setActiveView('business');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            t={t}
+          />
+        )}
+
+        {/* View 7: Phase 2 AI Tourism Companion Chatbot */}
         {activeView === 'companion' && (
           <AIChatbot
             onSelectDestination={(dest) => setSelectedDestination(dest)}
@@ -208,17 +222,24 @@ export default function App() {
           />
         )}
 
-        {/* View 7: Local Business Portal Preview */}
+        {/* View 8: Phase 4 Local Business Owner Portal */}
         {activeView === 'business' && (
-          <BusinessPortalPreview
-            onBackToExplore={() => setActiveView('tourist')}
+          <BusinessOwnerDashboard
+            onBackToMarketplace={() => {
+              setActiveView('marketplace');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 
-        {/* View 8: Tourism Authority Analytics Preview */}
+        {/* View 9: Phase 4 Tourism Authority Analytics Dashboard */}
         {activeView === 'authority' && (
-          <AuthorityDashboardPreview
-            onBackToExplore={() => setActiveView('tourist')}
+          <TourismAuthorityDashboard
+            onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
+            onNavigateToMarketplace={() => {
+              setActiveView('marketplace');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
       </main>

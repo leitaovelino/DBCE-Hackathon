@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Map, Star, Bot, Users, Calendar } from 'lucide-react';
+import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Map, Star, Bot, Users, Calendar, Store } from 'lucide-react';
 
 export default function Navbar({
   currentLang,
@@ -68,7 +68,7 @@ export default function Navbar({
               {t.nav.explore}
             </button>
 
-            {/* Crowd Radar (Phase 3 Module 1) */}
+            {/* Crowd Radar */}
             <button
               onClick={() => handleNavClick('crowd')}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
@@ -81,7 +81,7 @@ export default function Navbar({
               <span>{t.nav.crowd}</span>
             </button>
 
-            {/* Smart Itinerary (Phase 3 Module 2) */}
+            {/* Smart Itinerary */}
             <button
               onClick={() => handleNavClick('itinerary')}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
@@ -94,7 +94,7 @@ export default function Navbar({
               <span>{t.nav.itinerary}</span>
             </button>
 
-            {/* Interactive Map (Phase 2 Module 2) */}
+            {/* Interactive Map */}
             <button
               onClick={() => handleNavClick('map')}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
@@ -107,7 +107,7 @@ export default function Navbar({
               <span>{t.nav.map}</span>
             </button>
 
-            {/* Smart Recommendations (Phase 2 Module 3) */}
+            {/* Recommendations */}
             <button
               onClick={() => handleNavClick('recommendations')}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
@@ -120,7 +120,20 @@ export default function Navbar({
               <span>{t.nav.recommendations}</span>
             </button>
 
-            {/* AI Tourism Chatbot (Phase 2 Module 1) */}
+            {/* Local Marketplace (Phase 4) */}
+            <button
+              onClick={() => handleNavClick('marketplace')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                activeView === 'marketplace' 
+                  ? 'bg-teal-50 text-teal-800 border border-teal-200/60' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5 text-teal-600" />
+              <span>{t.nav.marketplace}</span>
+            </button>
+
+            {/* AI Tourism Chatbot */}
             <button
               onClick={() => handleNavClick('companion')}
               className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
@@ -136,10 +149,10 @@ export default function Navbar({
               </span>
             </button>
 
-            {/* Local Business Portal */}
+            {/* Local Business Owner Dashboard */}
             <button
               onClick={() => handleNavClick('business')}
-              className={`px-2 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer ${
+              className={`px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                 activeView === 'business'
                   ? 'bg-teal-50 text-teal-800 border border-teal-200/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -152,9 +165,9 @@ export default function Navbar({
             {/* Tourism Authority */}
             <button
               onClick={() => handleNavClick('authority')}
-              className={`px-2 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer ${
+              className={`px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                 activeView === 'authority'
-                  ? 'bg-blue-50 text-blue-800 border border-blue-200/60'
+                  ? 'bg-blue-900 text-blue-200 border border-blue-700'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
               }`}
             >
@@ -275,6 +288,15 @@ export default function Navbar({
             <span>{t.nav.recommendations}</span>
           </button>
           <button
+            onClick={() => handleNavClick('marketplace')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${
+              activeView === 'marketplace' ? 'bg-teal-50 text-teal-800' : 'text-slate-700'
+            }`}
+          >
+            <Store className="w-4 h-4 text-teal-600" />
+            <span>{t.nav.marketplace}</span>
+          </button>
+          <button
             onClick={() => handleNavClick('companion')}
             className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-between ${
               activeView === 'companion' ? 'bg-teal-50 text-teal-800' : 'text-slate-700'
@@ -293,14 +315,14 @@ export default function Navbar({
             className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
           >
             <Building2 className="w-4 h-4 text-teal-600" />
-            {t.nav.business}
+            <span>{t.nav.business}</span>
           </button>
           <button
             onClick={() => handleNavClick('authority')}
             className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
           >
             <ShieldCheck className="w-4 h-4 text-blue-600" />
-            {t.nav.authority}
+            <span>{t.nav.authority}</span>
           </button>
         </div>
       )}
