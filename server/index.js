@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import chatRouter from './routes/chat.js';
+import routesRouter from './routes/routes.js';
 
 // Load environment variables from server/.env
 dotenv.config();
@@ -41,16 +42,23 @@ app.use(express.json({ limit: '100kb' }));
 
 // 3. Health Check Endpoint
 app.get('/api/health', (req, res) => {
-  const hasKey = Boolean(
+  const hasGeminiKey = Boolean(
     process.env.GEMINI_API_KEY &&
     process.env.GEMINI_API_KEY !== 'your_gemini_api_key' &&
     process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here'
   );
 
+  const hasOrsKey = Boolean(
+    process.env.ORS_API_KEY &&
+    process.env.ORS_API_KEY !== 'your_ors_api_key' &&
+    process.env.ORS_API_KEY !== 'your_ors_api_key_here'
+  );
+
   res.status(200).json({
     status: 'ok',
-    service: 'GoaSmart AI Companion Backend',
-    geminiConfigured: hasKey,
+    service: 'GoaSmart AI Companion & Routing Backend',
+    geminiConfigured: hasGeminiKey,
+    orsConfigured: hasOrsKey,
     model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
     timestamp: new Date().toISOString()
   });
@@ -58,6 +66,7 @@ app.get('/api/health', (req, res) => {
 
 // 4. Mount API Routes
 app.use('/api/chat', chatRouter);
+app.use('/api/routes', routesRouter);
 
 // 5. Global Error Handling Middleware
 app.use((err, req, res, next) => {
@@ -70,16 +79,23 @@ app.use((err, req, res, next) => {
 
 // 6. Start Server
 app.listen(PORT, () => {
-  const isKeyConfigured = Boolean(
+  const hasGeminiKey = Boolean(
     process.env.GEMINI_API_KEY &&
     process.env.GEMINI_API_KEY !== 'your_gemini_api_key' &&
     process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here'
   );
 
+  const hasOrsKey = Boolean(
+    process.env.ORS_API_KEY &&
+    process.env.ORS_API_KEY !== 'your_ors_api_key' &&
+    process.env.ORS_API_KEY !== 'your_ors_api_key_here'
+  );
+
   console.log('===============================================================');
-  console.log(`🚀 GoaSmart Gemini AI Backend running on http://localhost:${PORT}`);
+  console.log(`🚀 GoaSmart Backend running on http://localhost:${PORT}`);
   console.log(`   Frontend Origin:   ${FRONTEND_URL}`);
-  console.log(`   Gemini Key Status: ${isKeyConfigured ? '✓ Configured' : '⚠️ Missing / Not set in server/.env'}`);
+  console.log(`   Gemini AI Status:  ${hasGeminiKey ? '✓ Configured' : '⚠️ Missing / Not set in server/.env'}`);
+  console.log(`   ORS Route Status:  ${hasOrsKey ? '✓ Configured' : '⚠️ Missing / Not set in server/.env'}`);
   console.log(`   Target AI Model:   ${process.env.GEMINI_MODEL || 'gemini-2.5-flash'}`);
   console.log('===============================================================\n');
 });

@@ -6,6 +6,8 @@ import { DESTINATIONS, MAP_CATEGORIES } from '../data/destinations';
 
 export default function InteractiveMap({
   destinations: propDestinations,
+  routeGeometry = null,
+  onClearRoute,
   onSelectDestinationModal,
   savedFavorites,
   onToggleFavorite,
@@ -14,6 +16,7 @@ export default function InteractiveMap({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
+  const routeLayerRef = useRef(null);
 
   const destinations = (propDestinations && propDestinations.length > 0) ? propDestinations : DESTINATIONS;
   const [selectedDestId, setSelectedDestId] = useState(() => (destinations[0]?.id || 'baga-beach'));
@@ -36,6 +39,37 @@ export default function InteractiveMap({
 
   const selectedDestination =
     destinations.find((d) => d.id === selectedDestId) || filteredDestinations[0] || destinations[0];
+
+  // Render ORS Route Polyline if routeGeometry is provided
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (routeLayerRef.current) {
+      routeLayerRef.current.remove();
+      routeLayerRef.current = null;
+    }
+
+    if (routeGeometry) {
+      const geoLayer = L.geoJSON(routeGeometry, {
+        style: {
+          color: '#0891b2',
+          weight: 5,
+          opacity: 0.85
+        }
+      }).addTo(map);
+
+      routeLayerRef.current = geoLayer;
+      try {
+        const bounds = geoLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50] });
+        }
+      } catch (err) {
+        console.warn('Could not fit bounds to route:', err);
+      }
+    }
+  }, [routeGeometry]);
 
   // Initialize Leaflet Map
   useEffect(() => {

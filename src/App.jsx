@@ -45,6 +45,9 @@ export default function App() {
   const [destinations, setDestinations] = useState(DESTINATIONS);
   const [destinationsLoading, setDestinationsLoading] = useState(true);
 
+  // Active Route Geometry for Map Plotting (from OpenRouteService)
+  const [activeRouteGeometry, setActiveRouteGeometry] = useState(null);
+
   // Load live destinations from Cloud Firestore
   useEffect(() => {
     let isMounted = true;
@@ -223,6 +226,11 @@ export default function App() {
               setActiveView('map');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onViewRouteOnMap={(geometry) => {
+              setActiveRouteGeometry(geometry);
+              setActiveView('map');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             t={t}
           />
         )}
@@ -231,6 +239,8 @@ export default function App() {
         {activeView === 'map' && (
           <InteractiveMap
             destinations={destinations}
+            routeGeometry={activeRouteGeometry}
+            onClearRoute={() => setActiveRouteGeometry(null)}
             onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
             savedFavorites={savedFavorites}
             onToggleFavorite={handleToggleFavorite}

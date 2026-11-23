@@ -7,9 +7,10 @@ import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import chatRouter from './routes/chat.js';
+import routesRouter from './routes/routes.js';
 
 console.log('===============================================================');
-console.log('       GOASMART BACKEND & GEMINI INTEGRATION TESTS');
+console.log('       GOASMART BACKEND & GEMINI & ORS INTEGRATION TESTS');
 console.log('===============================================================\n');
 
 let totalTests = 0;
@@ -37,11 +38,14 @@ app.use(express.json());
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
-    service: 'GoaSmart AI Companion Backend'
+    service: 'GoaSmart AI Companion & Routing Backend',
+    geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+    orsConfigured: Boolean(process.env.ORS_API_KEY)
   });
 });
 
 app.use('/api/chat', chatRouter);
+app.use('/api/routes', routesRouter);
 
 const server = app.listen(0);
 const port = server.address().port;
@@ -91,10 +95,10 @@ async function runTests() {
     'GET /api/health returned status ok'
   );
 
-  // Test 2: Reject Empty Message
+  // Test 2: Reject Empty Message in Chat
   const emptyRes = await makeRequest('/api/chat', 'POST', { message: '   ' });
   assertTest(
-    'Test 2: Rejects empty or whitespace-only messages with HTTP 400',
+    'Test 2: Chat rejects empty or whitespace-only messages with HTTP 400',
     emptyRes.statusCode === 400 && emptyRes.data?.success === false,
     emptyRes.data?.error || ''
   );
@@ -102,7 +106,7 @@ async function runTests() {
   // Test 3: Reject Missing Message Parameter
   const missingRes = await makeRequest('/api/chat', 'POST', {});
   assertTest(
-    'Test 3: Rejects missing message parameter with HTTP 400',
+    'Test 3: Chat rejects missing message parameter with HTTP 400',
     missingRes.statusCode === 400 && missingRes.data?.success === false,
     missingRes.data?.error || ''
   );
@@ -111,12 +115,12 @@ async function runTests() {
   const oversizedText = 'a'.repeat(2500);
   const oversizedRes = await makeRequest('/api/chat', 'POST', { message: oversizedText });
   assertTest(
-    'Test 4: Rejects oversized queries (>2000 chars) with HTTP 400',
+    'Test 4: Chat rejects oversized queries (>2000 chars) with HTTP 400',
     oversizedRes.statusCode === 400 && oversizedRes.data?.success === false,
     oversizedRes.data?.error || ''
   );
 
-  // Test 5: Valid Message Handling
+  // Test 5: Valid Chat Message Handling
   const validRes = await makeRequest('/api/chat', 'POST', {
     message: 'What are the best peaceful beaches in South Goa?',
     conversationHistory: []
@@ -127,6 +131,56 @@ async function runTests() {
     'Test 5: Chat endpoint processes valid Goa tourism query with proper schema',
     isHandledCleanly,
     validRes.data?.response ? `Response length: ${validRes.data.response.text.length} chars` : (validRes.data?.error || 'Handled cleanly')
+  );
+
+  // Test 6: Routes endpoint rejects missing coordinates
+  const missingCoordsRes = await makeRequest('/api/routes/directions', 'POST', {});
+  assertTest(
+    'Test 6: Routes endpoint rejects missing coordinates with HTTP 400',
+    missingCoordsRes.statusCode === 400 && missingCoordsRes.data?.success === false,
+    missingCoordsRes.data?.error || ''
+  );
+
+  // Test 7: Routes endpoint rejects fewer than 2 coordinates
+  const singleCoordRes = await makeRequest('/api/routes/directions', 'POST', {
+    coordinates: [[73.8278, 15.4909]]
+  });
+  assertTest(
+    'Test 7: Routes endpoint rejects < 2 coordinates with HTTP 400',
+    singleCoordRes.statusCode === 400 && singleCoordRes.data?.success === false,
+    singleCoordRes.data?.error || ''
+  );
+
+  // Test 8: Routes endpoint rejects out-of-bounds coordinates
+  const invalidBoundsRes = await makeRequest('/api/routes/directions', 'POST', {
+    coordinates: [[200.0, 15.4909], [73.9587, 100.0]]
+  });
+  assertTest(
+    'Test 8: Routes endpoint rejects out-of-bounds coordinates with HTTP 400',
+    invalidBoundsRes.statusCode === 400 && invalidBoundsRes.data?.success === false,
+    invalidBoundsRes.data?.error || ''
+  );
+
+  // Test 9: Routes endpoint handles valid coordinates gracefully
+  // (Either returns 200 with distanceKm/geometry if valid ORS_API_KEY is configured,
+  // or 503/401 with clean error structure if key is placeholder)
+  const validRouteRes = await makeRequest('/api/routes/directions', 'POST', {
+    coordinates: [
+      [73.8278, 15.4909], // Panaji
+      [73.7554, 15.5434]  // Calangute
+    ]
+  });
+
+  const isValidRouteHandled = (
+    (validRouteRes.statusCode === 200 && validRouteRes.data?.success && typeof validRouteRes.data?.distanceKm === 'number') ||
+    ([503, 401, 502].includes(validRouteRes.statusCode) && validRouteRes.data?.success === false && typeof validRouteRes.data?.error === 'string')
+  );
+  assertTest(
+    'Test 9: Routes endpoint cleanly handles routing query without crashing',
+    isValidRouteHandled,
+    validRouteRes.statusCode === 200
+      ? `Route calculated: ${validRouteRes.data.distanceKm} km, ${validRouteRes.data.durationMinutes} mins`
+      : `Status: HTTP ${validRouteRes.statusCode} (${validRouteRes.data?.error})`
   );
 
   server.close();

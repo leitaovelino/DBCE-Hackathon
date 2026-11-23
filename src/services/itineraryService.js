@@ -13,6 +13,73 @@ export const SAMPLE_START_LOCATIONS = [
   'Mopa International Airport (GOX)'
 ];
 
+// Verified coordinates [longitude, latitude] for ORS routing
+export const START_LOCATION_COORDINATES = {
+  'Panaji (Central Goa)': [73.8278, 15.4909],
+  'Calangute / Candolim (North Goa)': [73.7554, 15.5434],
+  'Margao (South Goa)': [73.9587, 15.2736],
+  'Dabolim Airport (GOI)': [73.8314, 15.3808],
+  'Mopa International Airport (GOX)': [73.8647, 15.7505]
+};
+
+const BACKEND_ROUTING_URL = 'http://localhost:5000/api/routes/directions';
+
+/**
+ * Calls backend OpenRouteService to calculate road distance and drive duration for stops.
+ * 
+ * @param {Array} stops - Array of day itinerary stops with destination objects
+ * @param {string} startLocationName - Starting hub name
+ */
+export async function calculateItineraryRoute(stops, startLocationName = 'Panaji (Central Goa)') {
+  if (!Array.isArray(stops) || stops.length === 0) {
+    return { available: false, error: 'No stops available to route.' };
+  }
+
+  const startCoord = START_LOCATION_COORDINATES[startLocationName] || START_LOCATION_COORDINATES['Panaji (Central Goa)'];
+
+  const stopCoords = stops.map((s) => {
+    const d = s.destination || {};
+    const lng = Number(d.longitude || d.coordinates?.lng || 73.95);
+    const lat = Number(d.latitude || d.coordinates?.lat || 15.35);
+    return [Number(lng.toFixed(6)), Number(lat.toFixed(6))];
+  });
+
+  const allCoordinates = [startCoord, ...stopCoords];
+
+  try {
+    const response = await fetch(BACKEND_ROUTING_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ coordinates: allCoordinates })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      return {
+        available: true,
+        distanceKm: data.distanceKm,
+        durationMinutes: data.durationMinutes,
+        segments: data.segments || [],
+        geometry: data.geometry,
+        provider: data.provider || 'OpenRouteService (Official driving-car)'
+      };
+    }
+
+    return {
+      available: false,
+      error: data.error || 'OpenRouteService route telemetry unavailable.'
+    };
+  } catch (err) {
+    return {
+      available: false,
+      error: 'Backend routing server offline (port 5000). Start server with ORS_API_KEY for live routing.'
+    };
+  }
+}
+
 export const EXPERIENCE_CATEGORIES = [
   'Beaches',
   'Nature and waterfalls',
