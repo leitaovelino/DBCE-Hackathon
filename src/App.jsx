@@ -15,12 +15,16 @@ import AIChatbot from './components/AIChatbot';
 import InteractiveMap from './components/InteractiveMap';
 import SmartRecommendations from './components/SmartRecommendations';
 
+// Phase 3 Modules
+import CrowdIntelligenceDashboard from './components/CrowdIntelligenceDashboard';
+import SmartItineraryPlanner from './components/SmartItineraryPlanner';
+
 import { DESTINATIONS } from './data/destinations';
 import { translations } from './data/translations';
 
 export default function App() {
   const [currentLang, setLang] = useState('en');
-  const [activeView, setActiveView] = useState('tourist'); // 'tourist', 'map', 'recommendations', 'companion', 'business', 'authority'
+  const [activeView, setActiveView] = useState('tourist'); // 'tourist', 'crowd', 'itinerary', 'map', 'recommendations', 'companion', 'business', 'authority'
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeRegion, setActiveRegion] = useState('All');
@@ -152,7 +156,31 @@ export default function App() {
           </>
         )}
 
-        {/* View 2: Phase 2 Interactive Goa Map */}
+        {/* View 2: Phase 3 Crowd Intelligence Dashboard */}
+        {activeView === 'crowd' && (
+          <CrowdIntelligenceDashboard
+            onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
+            onNavigateToItinerary={() => {
+              setActiveView('itinerary');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            t={t}
+          />
+        )}
+
+        {/* View 3: Phase 3 Smart Itinerary Planner */}
+        {activeView === 'itinerary' && (
+          <SmartItineraryPlanner
+            onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
+            onOpenMap={() => {
+              setActiveView('map');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            t={t}
+          />
+        )}
+
+        {/* View 4: Phase 2 Interactive Goa Map */}
         {activeView === 'map' && (
           <InteractiveMap
             onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
@@ -162,7 +190,7 @@ export default function App() {
           />
         )}
 
-        {/* View 3: Phase 2 Smart Destination Recommendations */}
+        {/* View 5: Phase 2 Smart Destination Recommendations */}
         {activeView === 'recommendations' && (
           <SmartRecommendations
             savedFavorites={savedFavorites}
@@ -172,7 +200,7 @@ export default function App() {
           />
         )}
 
-        {/* View 4: Phase 2 AI Tourism Companion Chatbot */}
+        {/* View 6: Phase 2 AI Tourism Companion Chatbot */}
         {activeView === 'companion' && (
           <AIChatbot
             onSelectDestination={(dest) => setSelectedDestination(dest)}
@@ -180,14 +208,14 @@ export default function App() {
           />
         )}
 
-        {/* View 5: Local Business Portal Preview */}
+        {/* View 7: Local Business Portal Preview */}
         {activeView === 'business' && (
           <BusinessPortalPreview
             onBackToExplore={() => setActiveView('tourist')}
           />
         )}
 
-        {/* View 6: Tourism Authority Analytics Preview */}
+        {/* View 8: Tourism Authority Analytics Preview */}
         {activeView === 'authority' && (
           <AuthorityDashboardPreview
             onBackToExplore={() => setActiveView('tourist')}

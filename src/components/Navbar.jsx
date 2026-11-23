@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Map, Star, Bot } from 'lucide-react';
+import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Map, Star, Bot, Users, Calendar } from 'lucide-react';
 
 export default function Navbar({
   currentLang,
@@ -35,8 +35,8 @@ export default function Navbar({
             onClick={() => handleNavClick('tourist')} 
             className="flex items-center gap-3 cursor-pointer group shrink-0"
           >
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-cyan-600/20 group-hover:scale-105 transition-transform duration-200">
-              <Compass className="w-6 h-6 animate-spin-slow" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-cyan-600/20 group-hover:scale-105 transition-transform duration-200">
+              <Compass className="w-5 h-5 sm:w-6 sm:h-6 animate-spin-slow" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -54,12 +54,12 @@ export default function Navbar({
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+          <nav className="hidden xl:flex items-center gap-1">
             
             {/* Explore / Home */}
             <button
               onClick={() => handleNavClick('tourist')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 activeView === 'tourist' 
                   ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -68,10 +68,36 @@ export default function Navbar({
               {t.nav.explore}
             </button>
 
-            {/* Interactive Map (Module 2) */}
+            {/* Crowd Radar (Phase 3 Module 1) */}
+            <button
+              onClick={() => handleNavClick('crowd')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                activeView === 'crowd' 
+                  ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-cyan-600" />
+              <span>{t.nav.crowd}</span>
+            </button>
+
+            {/* Smart Itinerary (Phase 3 Module 2) */}
+            <button
+              onClick={() => handleNavClick('itinerary')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
+                activeView === 'itinerary' 
+                  ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5 text-teal-600" />
+              <span>{t.nav.itinerary}</span>
+            </button>
+
+            {/* Interactive Map (Phase 2 Module 2) */}
             <button
               onClick={() => handleNavClick('map')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                 activeView === 'map' 
                   ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -81,10 +107,10 @@ export default function Navbar({
               <span>{t.nav.map}</span>
             </button>
 
-            {/* Smart Recommendations (Module 3) */}
+            {/* Smart Recommendations (Phase 2 Module 3) */}
             <button
               onClick={() => handleNavClick('recommendations')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                 activeView === 'recommendations' 
                   ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -94,10 +120,10 @@ export default function Navbar({
               <span>{t.nav.recommendations}</span>
             </button>
 
-            {/* AI Tourism Chatbot (Module 1) */}
+            {/* AI Tourism Chatbot (Phase 2 Module 1) */}
             <button
               onClick={() => handleNavClick('companion')}
-              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer ${
                 activeView === 'companion'
                   ? 'bg-teal-50 text-teal-800 border border-teal-200/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -105,15 +131,15 @@ export default function Navbar({
             >
               <Bot className="w-3.5 h-3.5 text-teal-600" />
               <span>{t.nav.companion}</span>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-extrabold">
-                Active
+              <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1 py-0.2 rounded font-extrabold">
+                AI
               </span>
             </button>
 
             {/* Local Business Portal */}
             <button
               onClick={() => handleNavClick('business')}
-              className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-2 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer ${
                 activeView === 'business'
                   ? 'bg-teal-50 text-teal-800 border border-teal-200/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -126,7 +152,7 @@ export default function Navbar({
             {/* Tourism Authority */}
             <button
               onClick={() => handleNavClick('authority')}
-              className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+              className={`px-2 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer ${
                 activeView === 'authority'
                   ? 'bg-blue-50 text-blue-800 border border-blue-200/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -189,16 +215,10 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Quick Live Mode Indicator */}
-            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-xs font-medium text-emerald-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Realtime Crowd Sync</span>
-            </div>
-
             {/* Mobile Hamburger Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 lg:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer"
+              className="p-2 xl:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -209,18 +229,36 @@ export default function Navbar({
 
       {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-lg animate-in slide-in-from-top duration-200">
+        <div className="xl:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-lg animate-in slide-in-from-top duration-200">
           <button
             onClick={() => handleNavClick('tourist')}
-            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold ${
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold ${
               activeView === 'tourist' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
             }`}
           >
             {t.nav.explore}
           </button>
           <button
+            onClick={() => handleNavClick('crowd')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${
+              activeView === 'crowd' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
+            }`}
+          >
+            <Users className="w-4 h-4 text-cyan-600" />
+            <span>{t.nav.crowd}</span>
+          </button>
+          <button
+            onClick={() => handleNavClick('itinerary')}
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${
+              activeView === 'itinerary' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-teal-600" />
+            <span>{t.nav.itinerary}</span>
+          </button>
+          <button
             onClick={() => handleNavClick('map')}
-            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 ${
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${
               activeView === 'map' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
             }`}
           >
@@ -229,7 +267,7 @@ export default function Navbar({
           </button>
           <button
             onClick={() => handleNavClick('recommendations')}
-            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 ${
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 ${
               activeView === 'recommendations' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
             }`}
           >
@@ -238,7 +276,7 @@ export default function Navbar({
           </button>
           <button
             onClick={() => handleNavClick('companion')}
-            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold flex items-center justify-between ${
+            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-between ${
               activeView === 'companion' ? 'bg-teal-50 text-teal-800' : 'text-slate-700'
             }`}
           >
@@ -247,19 +285,19 @@ export default function Navbar({
               {t.nav.companion}
             </span>
             <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
-              Active
+              AI
             </span>
           </button>
           <button
             onClick={() => handleNavClick('business')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+            className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
           >
             <Building2 className="w-4 h-4 text-teal-600" />
             {t.nav.business}
           </button>
           <button
             onClick={() => handleNavClick('authority')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+            className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
           >
             <ShieldCheck className="w-4 h-4 text-blue-600" />
             {t.nav.authority}
