@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Sun } from 'lucide-react';
+import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Map, Star, Bot } from 'lucide-react';
 
 export default function Navbar({
   currentLang,
@@ -33,31 +33,33 @@ export default function Navbar({
           {/* Logo */}
           <div 
             onClick={() => handleNavClick('tourist')} 
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group shrink-0"
           >
             <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-cyan-600/20 group-hover:scale-105 transition-transform duration-200">
               <Compass className="w-6 h-6 animate-spin-slow" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-700 via-teal-700 to-emerald-700 bg-clip-text text-transparent">
+                <span className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-700 via-teal-700 to-emerald-700 bg-clip-text text-transparent">
                   GoaSmart
                 </span>
-                <span className="text-xs px-2 py-0.5 font-semibold bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200">
+                <span className="text-[10px] px-2 py-0.5 font-bold bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200">
                   Live
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium hidden sm:block">
+              <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
                 Intelligent Tourism & Crowd Balancer
               </p>
             </div>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+            
+            {/* Explore / Home */}
             <button
               onClick={() => handleNavClick('tourist')}
-              className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 activeView === 'tourist' 
                   ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
@@ -66,36 +68,71 @@ export default function Navbar({
               {t.nav.explore}
             </button>
 
+            {/* Interactive Map (Module 2) */}
             <button
-              onClick={() => handleNavClick('tourist')}
-              className="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 flex items-center gap-1.5"
+              onClick={() => handleNavClick('map')}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                activeView === 'map' 
+                  ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+              }`}
             >
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>{t.nav.companion}</span>
-              <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Phase 2</span>
+              <Map className="w-3.5 h-3.5 text-cyan-600" />
+              <span>{t.nav.map}</span>
             </button>
 
+            {/* Smart Recommendations (Module 3) */}
+            <button
+              onClick={() => handleNavClick('recommendations')}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                activeView === 'recommendations' 
+                  ? 'bg-cyan-50 text-cyan-800 border border-cyan-200/60' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+              }`}
+            >
+              <Star className="w-3.5 h-3.5 text-amber-500" />
+              <span>{t.nav.recommendations}</span>
+            </button>
+
+            {/* AI Tourism Chatbot (Module 1) */}
+            <button
+              onClick={() => handleNavClick('companion')}
+              className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                activeView === 'companion'
+                  ? 'bg-teal-50 text-teal-800 border border-teal-200/60'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5 text-teal-600" />
+              <span>{t.nav.companion}</span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-extrabold">
+                Active
+              </span>
+            </button>
+
+            {/* Local Business Portal */}
             <button
               onClick={() => handleNavClick('business')}
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
                 activeView === 'business'
                   ? 'bg-teal-50 text-teal-800 border border-teal-200/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
               }`}
             >
-              <Building2 className="w-4 h-4 text-teal-600" />
+              <Building2 className="w-3.5 h-3.5 text-teal-600" />
               <span>{t.nav.business}</span>
             </button>
 
+            {/* Tourism Authority */}
             <button
               onClick={() => handleNavClick('authority')}
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
+              className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
                 activeView === 'authority'
                   ? 'bg-blue-50 text-blue-800 border border-blue-200/60'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
               }`}
             >
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
               <span>{t.nav.authority}</span>
             </button>
           </nav>
@@ -107,7 +144,7 @@ export default function Navbar({
             <div className="relative">
               <button
                 onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors border border-slate-200"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors border border-slate-200 cursor-pointer"
                 title="Change Language"
               >
                 <Globe className="w-3.5 h-3.5 text-slate-500" />
@@ -126,7 +163,7 @@ export default function Navbar({
                         setLang(l.code);
                         setLangDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3.5 py-2 text-xs font-medium flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                      className={`w-full text-left px-3.5 py-2 text-xs font-medium flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer ${
                         currentLang === l.code ? 'text-teal-700 font-bold bg-teal-50/60' : 'text-slate-700'
                       }`}
                     >
@@ -141,7 +178,7 @@ export default function Navbar({
             {/* Saved Places / Favorites Drawer Button */}
             <button
               onClick={onOpenFavorites}
-              className="relative p-2 text-slate-600 hover:text-red-500 hover:bg-slate-100 rounded-lg transition-colors"
+              className="relative p-2 text-slate-600 hover:text-red-500 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               title="Saved Places"
             >
               <Heart className={`w-5 h-5 ${savedCount > 0 ? 'fill-red-500 text-red-500' : ''}`} />
@@ -153,7 +190,7 @@ export default function Navbar({
             </button>
 
             {/* Quick Live Mode Indicator */}
-            <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-xs font-medium text-emerald-800">
+            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-xs font-medium text-emerald-800">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
               <span>Realtime Crowd Sync</span>
             </div>
@@ -161,7 +198,7 @@ export default function Navbar({
             {/* Mobile Hamburger Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 md:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+              className="p-2 lg:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -172,33 +209,57 @@ export default function Navbar({
 
       {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-lg animate-in slide-in-from-top duration-200">
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-lg animate-in slide-in-from-top duration-200">
           <button
             onClick={() => handleNavClick('tourist')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold bg-cyan-50 text-cyan-800"
+            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold ${
+              activeView === 'tourist' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
+            }`}
           >
             {t.nav.explore}
           </button>
           <button
-            onClick={() => handleNavClick('tourist')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+            onClick={() => handleNavClick('map')}
+            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 ${
+              activeView === 'map' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
+            }`}
+          >
+            <Map className="w-4 h-4 text-cyan-600" />
+            <span>{t.nav.map}</span>
+          </button>
+          <button
+            onClick={() => handleNavClick('recommendations')}
+            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 ${
+              activeView === 'recommendations' ? 'bg-cyan-50 text-cyan-800' : 'text-slate-700'
+            }`}
+          >
+            <Star className="w-4 h-4 text-amber-500" />
+            <span>{t.nav.recommendations}</span>
+          </button>
+          <button
+            onClick={() => handleNavClick('companion')}
+            className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold flex items-center justify-between ${
+              activeView === 'companion' ? 'bg-teal-50 text-teal-800' : 'text-slate-700'
+            }`}
           >
             <span className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+              <Bot className="w-4 h-4 text-teal-600" />
               {t.nav.companion}
             </span>
-            <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Phase 2</span>
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
+              Active
+            </span>
           </button>
           <button
             onClick={() => handleNavClick('business')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+            className="w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
           >
             <Building2 className="w-4 h-4 text-teal-600" />
             {t.nav.business}
           </button>
           <button
             onClick={() => handleNavClick('authority')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
+            className="w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-100 flex items-center gap-2"
           >
             <ShieldCheck className="w-4 h-4 text-blue-600" />
             {t.nav.authority}

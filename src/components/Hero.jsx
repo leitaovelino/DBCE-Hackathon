@@ -1,7 +1,7 @@
 import React from 'react';
-import { Search, Sparkles, MapPin, Compass, ArrowRight, ShieldCheck, Users, TreePine, Waves } from 'lucide-react';
+import { Search, Sparkles, MapPin, Compass, ArrowRight, ShieldCheck, Users, TreePine, Waves, Bot } from 'lucide-react';
 
-export default function Hero({ t, searchQuery, setSearchQuery, onExploreClick, onFilterVibe }) {
+export default function Hero({ t, searchQuery, setSearchQuery, onExploreClick, onAiClick, onFilterVibe }) {
   const quickVibes = [
     { label: '🌊 Serene Beaches', tag: 'Eco-Tourism & Quiet Beach' },
     { label: '🚣 Lagoons & Kayaking', tag: 'Kayaking' },
@@ -39,6 +39,27 @@ export default function Hero({ t, searchQuery, setSearchQuery, onExploreClick, o
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
             {t.hero.subtitle}
           </p>
+
+          {/* Direct Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+            <button
+              onClick={onExploreClick}
+              className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer"
+            >
+              <span>{t.hero.exploreButton}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onAiClick}
+              className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs sm:text-sm rounded-xl backdrop-blur-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Bot className="w-4 h-4 text-cyan-400" />
+              <span>{t.hero.aiButton}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-400 text-slate-900 font-extrabold">
+                Live
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Live Search & Filter Bar */}
@@ -56,7 +77,7 @@ export default function Hero({ t, searchQuery, setSearchQuery, onExploreClick, o
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 text-xs text-slate-300 hover:text-white bg-white/20 px-2 py-1 rounded-md"
+                  className="absolute right-3 text-xs text-slate-300 hover:text-white bg-white/20 px-2 py-1 rounded-md cursor-pointer"
                 >
                   Clear
                 </button>
@@ -64,9 +85,9 @@ export default function Hero({ t, searchQuery, setSearchQuery, onExploreClick, o
             </div>
             <button
               onClick={onExploreClick}
-              className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-bold text-sm rounded-xl shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition-transform active:scale-95"
+              className="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer"
             >
-              <span>{t.hero.exploreButton}</span>
+              <span>Search</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -93,7 +114,7 @@ export default function Hero({ t, searchQuery, setSearchQuery, onExploreClick, o
               <Compass className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-2xl font-extrabold text-white">16+</div>
+              <div className="text-2xl font-extrabold text-white">20+</div>
               <div className="text-xs text-slate-300 font-medium">{t.hero.statDestinations}</div>
             </div>
           </div>
