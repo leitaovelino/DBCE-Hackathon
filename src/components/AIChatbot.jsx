@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Send, Sparkles, Bot, User, Trash2, ArrowRight, ShieldCheck, MapPin, Compass, Info, MessageSquare } from 'lucide-react';
 import { sendChatMessage } from '../services/chatService';
 import { DESTINATIONS } from '../data/destinations';
@@ -91,51 +92,63 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
     inputRef.current?.focus();
   };
 
-  // Helper to format markdown bullets and bold text cleanly
-  const renderFormattedText = (rawText) => {
-    return rawText.split('\n').map((line, idx) => {
-      if (line.startsWith('### ')) {
-        return (
-          <h4 key={idx} className="font-bold text-slate-900 text-sm mt-3 mb-1">
-            {line.replace('### ', '')}
-          </h4>
-        );
-      }
-      if (line.startsWith('- ') || line.startsWith('* ')) {
-        const content = line.substring(2);
-        return (
-          <div key={idx} className="flex items-start gap-2 my-1 text-xs sm:text-sm text-slate-700">
-            <span className="text-teal-600 font-bold">•</span>
-            <span>{parseBold(content)}</span>
-          </div>
-        );
-      }
-      if (/^\d+\.\s/.test(line)) {
-        return (
-          <div key={idx} className="my-1.5 text-xs sm:text-sm text-slate-700">
-            {parseBold(line)}
-          </div>
-        );
-      }
-      if (line.trim() === '') {
-        return <div key={idx} className="h-2" />;
-      }
-      return (
-        <p key={idx} className="text-xs sm:text-sm text-slate-700 leading-relaxed my-1">
-          {parseBold(line)}
-        </p>
-      );
-    });
-  };
+  // Render rich, safe Markdown responses for the AI companion
+  const renderMarkdown = (rawText) => {
+    if (!rawText) return null;
+    // Strip trailing [RECOMMENDED: ...] machine tag if present in raw text
+    const cleanedText = rawText.replace(/\[RECOMMENDED:\s*[^\]]+\]/gi, '').trim();
 
-  const parseBold = (str) => {
-    const parts = str.split(/(\*\*.*?\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
-      }
-      return part;
-    });
+    return (
+      <div className="prose-chat text-xs sm:text-sm text-slate-800 leading-relaxed break-words overflow-hidden">
+        <ReactMarkdown
+          components={{
+            h1: ({ node, ...props }) => (
+              <h3 className="font-extrabold text-slate-900 text-sm sm:text-base mt-3 mb-1.5 tracking-tight border-b border-slate-100 pb-1" {...props} />
+            ),
+            h2: ({ node, ...props }) => (
+              <h4 className="font-bold text-cyan-900 text-xs sm:text-sm mt-3 mb-1 tracking-tight" {...props} />
+            ),
+            h3: ({ node, ...props }) => (
+              <h5 className="font-bold text-slate-900 text-xs sm:text-sm mt-2.5 mb-1" {...props} />
+            ),
+            h4: ({ node, ...props }) => (
+              <h6 className="font-bold text-slate-800 text-[11px] sm:text-xs mt-2 mb-0.5" {...props} />
+            ),
+            p: ({ node, ...props }) => (
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed my-1.5 break-words" {...props} />
+            ),
+            strong: ({ node, ...props }) => (
+              <strong className="font-extrabold text-slate-900" {...props} />
+            ),
+            em: ({ node, ...props }) => (
+              <em className="italic text-slate-600 font-medium" {...props} />
+            ),
+            ul: ({ node, ...props }) => (
+              <ul className="my-2 space-y-1 pl-4 list-disc marker:text-cyan-600 text-xs sm:text-sm text-slate-700" {...props} />
+            ),
+            ol: ({ node, ...props }) => (
+              <ol className="my-2 space-y-1.5 pl-4 list-decimal marker:text-cyan-700 marker:font-bold text-xs sm:text-sm text-slate-700" {...props} />
+            ),
+            li: ({ node, ...props }) => (
+              <li className="leading-relaxed pl-1" {...props} />
+            ),
+            code: ({ inline, className, children, ...props }) => (
+              <code className="px-1.5 py-0.5 bg-slate-100 text-cyan-800 rounded font-mono text-[11px] sm:text-xs font-semibold border border-slate-200/80" {...props}>
+                {children}
+              </code>
+            ),
+            blockquote: ({ node, ...props }) => (
+              <blockquote className="border-l-3 border-cyan-500 pl-3 my-2 text-xs sm:text-sm italic text-slate-600 bg-cyan-50/50 py-1.5 rounded-r-lg" {...props} />
+            ),
+            hr: ({ node, ...props }) => (
+              <hr className="my-3 border-slate-200" {...props} />
+            )
+          }}
+        >
+          {cleanedText}
+        </ReactMarkdown>
+      </div>
+    );
   };
 
   return (
@@ -214,8 +227,8 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
                         : 'bg-gradient-to-r from-cyan-700 to-teal-700 text-white rounded-tr-none shadow-sm'
                     }`}
                   >
-                    <div className={isAssistant ? 'text-slate-800' : 'text-white text-xs sm:text-sm font-medium'}>
-                      {isAssistant ? renderFormattedText(msg.text) : msg.text}
+                    <div className={isAssistant ? 'text-slate-800' : 'text-white text-xs sm:text-sm font-medium whitespace-pre-wrap'}>
+                      {isAssistant ? renderMarkdown(msg.text) : msg.text}
                     </div>
 
                     {/* Attached Destination Recommendations Pills */}
