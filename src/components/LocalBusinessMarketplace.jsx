@@ -451,8 +451,11 @@ export default function LocalBusinessMarketplace({
 
                   {/* Booking Form */}
                   <form onSubmit={handleSubmitBooking} className="space-y-4 pt-2 border-t border-slate-100">
-                    <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Book an Experience
+                    <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
+                      <span>Book an Experience</span>
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                        Demo Mode
+                      </span>
                     </h5>
 
                     {/* Experience Selection */}

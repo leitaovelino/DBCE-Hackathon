@@ -103,7 +103,15 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
     throw err;
   }
 
-  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  // Models to attempt in order of preference for high resilience
+  const candidateModels = Array.from(new Set([
+    primaryModel,
+    'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash'
+  ]));
 
   // Format previous turns for the API
   const formattedContents = [];
@@ -135,33 +143,38 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
     parts: [{ text: promptText }]
   });
 
-  try {
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: formattedContents,
-      config: {
-        systemInstruction: GOA_TOURISM_SYSTEM_PROMPT,
-        temperature: 0.7,
-        maxOutputTokens: 1200
+  let lastError = null;
+
+  for (const modelToTry of candidateModels) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelToTry,
+        contents: formattedContents,
+        config: {
+          systemInstruction: GOA_TOURISM_SYSTEM_PROMPT,
+          temperature: 0.7,
+          maxOutputTokens: 1200
+        }
+      });
+
+      const rawText = response.text || 'I am ready to help you plan your journey through Goa.';
+      return extractRecommendations(rawText);
+    } catch (apiError) {
+      lastError = apiError;
+      console.warn(`[Gemini] Model ${modelToTry} failed (${apiError.status || apiError.message}). Trying next candidate...`);
+
+      // If invalid API key, don't bother retrying other models
+      if (apiError.status === 400 || apiError.message?.includes('API_KEY_INVALID')) {
+        throw new Error('INVALID_API_KEY');
       }
-    });
-
-    const rawText = response.text || 'I am ready to help you plan your journey through Goa.';
-    return extractRecommendations(rawText);
-  } catch (apiError) {
-    console.error('Gemini API Error:', apiError.message || apiError);
-
-    // Specific error classification
-    if (apiError.status === 400 || apiError.message?.includes('API_KEY_INVALID')) {
-      throw new Error('INVALID_API_KEY');
     }
-    if (apiError.status === 429 || apiError.message?.includes('RESOURCE_EXHAUSTED')) {
-      throw new Error('QUOTA_EXCEEDED');
-    }
-    if (apiError.message?.includes('MODEL_NOT_FOUND')) {
-      throw new Error('MODEL_NOT_AVAILABLE');
-    }
-
-    throw new Error(`GEMINI_SERVICE_ERROR: ${apiError.message}`);
   }
+
+  console.error('Gemini API Error after exhausting candidate models:', lastError?.message || lastError);
+
+  if (lastError?.status === 429 || lastError?.message?.includes('RESOURCE_EXHAUSTED')) {
+    throw new Error('QUOTA_EXCEEDED');
+  }
+
+  throw new Error(`GEMINI_SERVICE_ERROR: ${lastError?.message || 'Candidate models unavailable'}`);
 }
