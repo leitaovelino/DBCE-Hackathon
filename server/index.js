@@ -2,14 +2,13 @@
  * GoaSmart Platform - Express Backend & Gemini AI Gateway
  */
 
+// Load environment variables relative to this entry file before any routes or services load
+import './env.js';
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import chatRouter from './routes/chat.js';
 import routesRouter from './routes/routes.js';
-
-// Load environment variables from server/.env
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -59,7 +58,7 @@ app.get('/api/health', (req, res) => {
     service: 'GoaSmart AI Companion & Routing Backend',
     geminiConfigured: hasGeminiKey,
     orsConfigured: hasOrsKey,
-    model: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
     timestamp: new Date().toISOString()
   });
 });
@@ -96,6 +95,6 @@ app.listen(PORT, () => {
   console.log(`   Frontend Origin:   ${FRONTEND_URL}`);
   console.log(`   Gemini AI Status:  ${hasGeminiKey ? '✓ Configured' : '⚠️ Missing / Not set in server/.env'}`);
   console.log(`   ORS Route Status:  ${hasOrsKey ? '✓ Configured' : '⚠️ Missing / Not set in server/.env'}`);
-  console.log(`   Target AI Model:   ${process.env.GEMINI_MODEL || 'gemini-3.5-flash'}`);
+  console.log(`   Target AI Model:   ${process.env.GEMINI_MODEL || 'gemini-2.5-flash'}`);
   console.log('===============================================================\n');
 });

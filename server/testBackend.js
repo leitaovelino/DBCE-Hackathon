@@ -3,6 +3,7 @@
  * Runs within the server workspace where express and @google/genai are installed.
  */
 
+import './env.js';
 import http from 'http';
 import express from 'express';
 import cors from 'cors';

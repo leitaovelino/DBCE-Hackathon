@@ -5,6 +5,7 @@
  * Configured as the GoaSmart AI Travel Companion & Crowd Balancer.
  */
 
+import '../env.js';
 import { GoogleGenAI } from '@google/genai';
 
 // System prompt grounding Gemini in GoaSmart's tourism catalog and crowd-distribution mission
@@ -45,7 +46,8 @@ RESPONSE GUIDELINES:
 1. Provide practical, well-structured itineraries with timings, approximate costs, and local cuisine recommendations (such as Goan Fish Thali, Poi bread, Kokum Solkadhi, Bebinca).
 2. If asked in Hindi or Konkani, reply courteously in that language.
 3. If the user mentions a specific budget (e.g. ₹1500), provide a realistic itemized budget breakdown.
-4. At the end of your response, output a single machine-readable tag containing the destination IDs you recommended:
+4. Keep responses well-paced, engaging, and complete. Ensure each day has a clear morning, afternoon, and evening plan, and always finish all thoughts cleanly.
+5. At the end of your response, output a single machine-readable tag containing the destination IDs you recommended:
    [RECOMMENDED: dest-id-1, dest-id-2]
    Example: [RECOMMENDED: galgibaga-beach, cola-beach]
    Only use IDs from the catalog above.
@@ -103,7 +105,7 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
     throw err;
   }
 
-  const primaryModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  const primaryModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   // Models to attempt in order of preference for high resilience
   const candidateModels = Array.from(new Set([
     primaryModel,
@@ -153,7 +155,7 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
         config: {
           systemInstruction: GOA_TOURISM_SYSTEM_PROMPT,
           temperature: 0.7,
-          maxOutputTokens: 1200
+          maxOutputTokens: 4000
         }
       });
 
@@ -164,7 +166,13 @@ export async function generateGeminiChat(userMessage, conversationHistory = [], 
       console.warn(`[Gemini] Model ${modelToTry} failed (${apiError.status || apiError.message}). Trying next candidate...`);
 
       // If invalid API key, don't bother retrying other models
-      if (apiError.status === 400 || apiError.message?.includes('API_KEY_INVALID')) {
+      if (
+        apiError.status === 400 || 
+        apiError.status === 401 || 
+        apiError.message?.includes('API_KEY_INVALID') || 
+        apiError.message?.includes('UNAUTHENTICATED') ||
+        apiError.message?.includes('API key not valid')
+      ) {
         throw new Error('INVALID_API_KEY');
       }
     }
