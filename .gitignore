@@ -26,3 +26,11 @@ dist-ssr
 # Environment
 .env
 .env.production
+.env.local
+server/.env
+server/node_modules/
+
+# Service Account Keys
+serviceAccountKey.json
+*serviceAccount*.json
+

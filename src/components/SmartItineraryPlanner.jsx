@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, DollarSign, Users, Sparkles, Trash2, Plus, ArrowRight, RotateCcw, AlertTriangle, ShieldCheck, CheckCircle2, ChevronRight, Compass } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Clock, MapPin, DollarSign, Users, Sparkles, Trash2, Plus, ArrowRight, RotateCcw, AlertTriangle, ShieldCheck, CheckCircle2, ChevronRight, Compass, Car, Navigation, Route } from 'lucide-react';
 import { DESTINATIONS } from '../data/destinations';
-import { generateSmartItinerary, SAMPLE_START_LOCATIONS, EXPERIENCE_CATEGORIES } from '../services/itineraryService';
+import { generateSmartItinerary, calculateItineraryRoute, SAMPLE_START_LOCATIONS, EXPERIENCE_CATEGORIES } from '../services/itineraryService';
 import { SMART_NUDGES } from '../services/nudgeService';
 
 export default function SmartItineraryPlanner({
   onSelectDestinationModal,
   onOpenMap,
+  onViewRouteOnMap,
   t
 }) {
   // Input form state
@@ -40,6 +41,40 @@ export default function SmartItineraryPlanner({
 
   const [activeDayTab, setActiveDayTab] = useState(1);
   const [addDestinationModalDay, setAddDestinationModalDay] = useState(null);
+
+  // OpenRouteService Road Telemetry State
+  const [routeData, setRouteData] = useState(null);
+  const [isRoutingLoading, setIsRoutingLoading] = useState(false);
+
+  const currentDay = itinerary.days.find((d) => d.dayNumber === activeDayTab) || itinerary.days[0];
+
+  // Recalculate ORS road route whenever stops or day changes
+  useEffect(() => {
+    let isMounted = true;
+    const currentDayStops = currentDay?.stops || [];
+
+    if (currentDayStops.length >= 1) {
+      setIsRoutingLoading(true);
+      calculateItineraryRoute(currentDayStops, itinerary.startLocation)
+        .then((result) => {
+          if (isMounted) {
+            setRouteData(result);
+            setIsRoutingLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (isMounted) {
+            setRouteData({ available: false, error: err.message });
+            setIsRoutingLoading(false);
+          }
+        });
+    } else {
+      setRouteData(null);
+      setIsRoutingLoading(false);
+    }
+
+    return () => { isMounted = false; };
+  }, [currentDay?.stops, itinerary.startLocation]);
 
   const handleGenerate = (e) => {
     if (e) e.preventDefault();
@@ -156,8 +191,6 @@ export default function SmartItineraryPlanner({
       };
     });
   };
-
-  const currentDay = itinerary.days.find((d) => d.dayNumber === activeDayTab) || itinerary.days[0];
 
   return (
     <div className="py-8 sm:py-12 bg-slate-50 min-h-[calc(100vh-80px)]">
@@ -346,6 +379,37 @@ export default function SmartItineraryPlanner({
                 <span className="text-lg font-black text-cyan-400">{itinerary.totalDestinations} Places</span>
               </div>
 
+              {/* Live OpenRouteService Driving Telemetry */}
+              <div className="bg-slate-800 px-4 py-2 rounded-2xl border border-slate-700 min-w-[140px]">
+                <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                  <Car className="w-3 h-3 text-cyan-400" />
+                  <span>Road Driving Distance</span>
+                </span>
+                {isRoutingLoading ? (
+                  <span className="text-xs text-cyan-300 font-semibold animate-pulse">Routing via ORS...</span>
+                ) : routeData?.available ? (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-black text-cyan-400">{routeData.distanceKm} km</span>
+                    <span className="text-[10px] text-slate-400">({routeData.durationMinutes} mins)</span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-400 font-mono">Telemetry offline</span>
+                )}
+              </div>
+
+              {/* View Route on Interactive Map Button */}
+              {routeData?.geometry && (
+                <button
+                  type="button"
+                  onClick={() => onViewRouteOnMap && onViewRouteOnMap(routeData.geometry)}
+                  className="px-3.5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold text-xs rounded-2xl flex items-center gap-1.5 shadow-md shadow-cyan-600/20 transition-all cursor-pointer"
+                  title="View actual OpenRouteService driving road polyline on map"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span>Plot Road on Map</span>
+                </button>
+              )}
+
               <button
                 onClick={handleGenerate}
                 className="p-2.5 bg-white/10 hover:bg-white/20 text-slate-200 rounded-xl transition-colors cursor-pointer"
@@ -356,13 +420,24 @@ export default function SmartItineraryPlanner({
             </div>
           </div>
 
-          {/* Sample Estimate Label Banner */}
-          <div className="pt-3 text-[11px] text-slate-400 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-amber-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Sample travel times & costs generated by GoaSmart heuristic optimization algorithm</span>
+          {/* Road Telemetry Status Banner */}
+          <div className="pt-3 text-[11px] flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-slate-800/80">
+            {routeData?.available ? (
+              <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Verified driving distance & travel times computed via OpenRouteService API (driving-car profile)</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-amber-300">
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Road telemetry: {routeData?.error || 'Start backend on :5000 with ORS_API_KEY for live road routing'}</span>
+              </span>
+            )}
+            <span className="text-slate-400">
+              {routeData?.available
+                ? `Day ${currentDay.dayNumber}: ${routeData.distanceKm} km • ~${routeData.durationMinutes} mins total on road`
+                : itinerary.estimatedTotalTravelTime}
             </span>
-            <span className="text-slate-500 hidden sm:inline">{itinerary.estimatedTotalTravelTime}</span>
           </div>
 
         </div>
@@ -479,7 +554,11 @@ export default function SmartItineraryPlanner({
                       {/* Right: Actions */}
                       <div className="flex items-center justify-between md:justify-end gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0">
                         <span className="text-[11px] text-slate-500 font-medium">
-                          Next: {stop.travelTimeToNext}
+                          Next: {
+                            routeData?.available && routeData.segments && routeData.segments[idx + 1]
+                              ? `${routeData.segments[idx + 1].distanceKm} km drive (~${routeData.segments[idx + 1].durationMinutes} mins via ORS)`
+                              : stop.travelTimeToNext
+                          }
                         </span>
 
                         <div className="flex items-center gap-1.5">

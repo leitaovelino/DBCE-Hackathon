@@ -76,7 +76,7 @@ export default function AIChatbot({ onSelectDestination, onBackToExplore }) {
       const errorMsg = {
         id: Date.now() + 1,
         sender: 'assistant',
-        text: 'Sorry, I encountered a temporary issue. Please try asking again.',
+        text: err.message || 'Sorry, I encountered a temporary issue. Please try asking again.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, errorMsg]);

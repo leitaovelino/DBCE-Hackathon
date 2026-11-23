@@ -5,6 +5,9 @@ import { Search, MapPin, Layers, Filter, Compass, Heart, ArrowUpRight, ShieldChe
 import { DESTINATIONS, MAP_CATEGORIES } from '../data/destinations';
 
 export default function InteractiveMap({
+  destinations: propDestinations,
+  routeGeometry = null,
+  onClearRoute,
   onSelectDestinationModal,
   savedFavorites,
   onToggleFavorite,
@@ -13,27 +16,60 @@ export default function InteractiveMap({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
+  const routeLayerRef = useRef(null);
 
-  const [selectedDestId, setSelectedDestId] = useState(DESTINATIONS[0].id);
+  const destinations = (propDestinations && propDestinations.length > 0) ? propDestinations : DESTINATIONS;
+  const [selectedDestId, setSelectedDestId] = useState(() => (destinations[0]?.id || 'baga-beach'));
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileList, setShowMobileList] = useState(false);
 
   // Filter destinations by map category and search query
-  const filteredDestinations = DESTINATIONS.filter((d) => {
+  const filteredDestinations = destinations.filter((d) => {
     const matchesCategory =
       activeCategory === 'All' || d.mapCategory === activeCategory;
     const matchesSearch =
       searchQuery.trim() === '' ||
       d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.taluka.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      (d.taluka && d.taluka.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (d.tags && d.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())));
     return matchesCategory && matchesSearch;
   });
 
   const selectedDestination =
-    DESTINATIONS.find((d) => d.id === selectedDestId) || filteredDestinations[0] || DESTINATIONS[0];
+    destinations.find((d) => d.id === selectedDestId) || filteredDestinations[0] || destinations[0];
+
+  // Render ORS Route Polyline if routeGeometry is provided
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (routeLayerRef.current) {
+      routeLayerRef.current.remove();
+      routeLayerRef.current = null;
+    }
+
+    if (routeGeometry) {
+      const geoLayer = L.geoJSON(routeGeometry, {
+        style: {
+          color: '#0891b2',
+          weight: 5,
+          opacity: 0.85
+        }
+      }).addTo(map);
+
+      routeLayerRef.current = geoLayer;
+      try {
+        const bounds = geoLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50] });
+        }
+      } catch (err) {
+        console.warn('Could not fit bounds to route:', err);
+      }
+    }
+  }, [routeGeometry]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -126,12 +162,15 @@ export default function InteractiveMap({
         popupAnchor: [0, -18]
       });
 
-      const marker = L.marker([dest.coordinates.lat, dest.coordinates.lng], { icon: customIcon })
+      const lat = dest.latitude !== undefined ? Number(dest.latitude) : (dest.coordinates?.lat || 15.35);
+      const lng = dest.longitude !== undefined ? Number(dest.longitude) : (dest.coordinates?.lng || 73.95);
+
+      const marker = L.marker([lat, lng], { icon: customIcon })
         .addTo(map)
         .on('click', () => {
           setSelectedDestId(dest.id);
           setShowMobileList(false);
-          map.flyTo([dest.coordinates.lat, dest.coordinates.lng], 13, { duration: 1.2 });
+          map.flyTo([lat, lng], 13, { duration: 1.2 });
         });
 
       // Bind informative popup
@@ -139,10 +178,10 @@ export default function InteractiveMap({
         <div style="font-family: inherit; padding: 4px; max-width: 200px;">
           <h4 style="font-weight: 800; font-size: 13px; margin: 0 0 4px 0; color: #0f172a;">${dest.name}</h4>
           <span style="font-size: 10px; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 700;">
-            ${dest.mapCategory}
+            ${dest.mapCategory || dest.category || 'Attraction'}
           </span>
           <div style="margin-top: 6px; font-size: 11px; color: ${pinColor}; font-weight: 700;">
-            ● ${dest.crowdLevel} (${dest.crowdScore}%)
+            ● ${dest.crowdLevel} (${dest.crowdScore || 50}%)
           </div>
         </div>
       `);
@@ -157,7 +196,9 @@ export default function InteractiveMap({
     setShowMobileList(false);
     const map = mapInstanceRef.current;
     if (map) {
-      map.flyTo([dest.coordinates.lat, dest.coordinates.lng], 13, { duration: 1.2 });
+      const lat = dest.latitude !== undefined ? Number(dest.latitude) : (dest.coordinates?.lat || 15.35);
+      const lng = dest.longitude !== undefined ? Number(dest.longitude) : (dest.coordinates?.lng || 73.95);
+      map.flyTo([lat, lng], 13, { duration: 1.2 });
       if (markersRef.current[dest.id]) {
         markersRef.current[dest.id].openPopup();
       }

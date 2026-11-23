@@ -1,12 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Edit3, Trash2, Check, X, Users, DollarSign, Eye, MessageSquare, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
-import { getBusinesses, addBusiness, updateBusiness, getBookings, updateBookingStatus } from '../services/businessService';
+import { getBusinesses, getBusinessesFromFirestore, addBusiness, updateBusiness, getBookings, updateBookingStatus } from '../services/businessService';
 import { MARKETPLACE_CATEGORIES } from '../data/businesses';
+import { useAuth } from '../context/AuthContext';
 
 export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
+  const { currentUser } = useAuth();
   const [businesses, setBusinesses] = useState(() => getBusinesses());
   const [bookings, setBookings] = useState(() => getBookings());
   const [activeTab, setActiveTab] = useState('listings'); // 'listings', 'bookings', 'new-listing'
+
+  // Load from Firestore
+  useEffect(() => {
+    let isMounted = true;
+    async function refreshListings() {
+      try {
+        const live = await getBusinessesFromFirestore();
+        if (isMounted && live && live.length > 0) {
+          setBusinesses(live);
+        }
+      } catch (e) {
+        console.warn('Fallback to local listings:', e);
+      }
+    }
+    refreshListings();
+    return () => { isMounted = false; };
+  }, []);
 
   // New Listing Form State
   const [newBiz, setNewBiz] = useState({
@@ -28,30 +47,33 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
   const [editingBizId, setEditingBizId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleCreateOrUpdateListing = (e) => {
+  const handleCreateOrUpdateListing = async (e) => {
     e.preventDefault();
 
     const servicesArray = typeof newBiz.services === 'string'
       ? newBiz.services.split(',').map((s) => s.trim()).filter(Boolean)
       : newBiz.services;
 
+    const ownerUid = currentUser?.uid || 'verified-owner-uid';
+
     if (editingBizId) {
-      updateBusiness(editingBizId, {
+      await updateBusiness(editingBizId, {
         ...newBiz,
         services: servicesArray,
         startingPrice: Number(newBiz.startingPrice)
-      });
+      }, ownerUid);
       setSuccessMessage('Listing updated successfully!');
     } else {
-      addBusiness({
+      await addBusiness({
         ...newBiz,
         services: servicesArray,
         startingPrice: Number(newBiz.startingPrice)
-      });
+      }, ownerUid);
       setSuccessMessage('New local business published to the marketplace!');
     }
 
-    setBusinesses(getBusinesses());
+    const refreshed = await getBusinessesFromFirestore();
+    setBusinesses(refreshed);
     setEditingBizId(null);
     setActiveTab('listings');
 
