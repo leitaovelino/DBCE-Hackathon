@@ -15,6 +15,7 @@ export default function Navbar({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { user, userProfile, isAuthenticated, logout } = useAuth();
 
   const languages = [
@@ -26,6 +27,15 @@ export default function Navbar({
   const handleNavClick = (view) => {
     setActiveView(view);
     setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setUserDropdownOpen(false);
+    setMobileMenuOpen(false);
+    setActiveView('tourist');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -232,25 +242,87 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Authentication Buttons / Profile */}
+            {/* Authentication Buttons / Profile Dropdown */}
             {isAuthenticated ? (
-              <button
-                onClick={onOpenProfileModal}
-                className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer group"
-                title="Manage Profile"
-              >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-600 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                  {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : (user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U')}
-                </div>
-                <div className="text-left hidden md:block">
-                  <div className="text-xs font-bold text-slate-800 leading-tight group-hover:text-teal-700 truncate max-w-[80px]">
-                    {userProfile?.displayName || user?.displayName || 'User'}
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer group"
+                  title="User Account Menu"
+                >
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-600 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                    {(userProfile?.name || user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
                   </div>
-                  <div className="text-[9px] uppercase font-extrabold tracking-wider text-teal-600">
-                    {userProfile?.role === 'authority' ? 'Gov Official' : userProfile?.role === 'business_owner' ? 'Business' : 'Tourist'}
+                  <div className="text-left hidden md:block">
+                    <div className="text-xs font-bold text-slate-800 leading-tight group-hover:text-teal-700 truncate max-w-[100px]">
+                      {userProfile?.name || user?.displayName || 'My Account'}
+                    </div>
+                    <div className="text-[9px] uppercase font-extrabold tracking-wider text-teal-600">
+                      {userProfile?.role === 'authority' ? 'Gov Official' : userProfile?.role === 'business_owner' ? 'Business Host' : 'Tourist'}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+
+                {userDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 animate-in fade-in duration-150 space-y-2.5">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-xs font-bold text-slate-900 truncate">
+                        {userProfile?.name || user?.displayName || 'User'}
+                      </div>
+                      <div className="text-[11px] text-slate-500 truncate font-mono">
+                        {user?.email}
+                      </div>
+                      <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border bg-teal-50 text-teal-800 border-teal-200">
+                        <span>Role:</span>
+                        <span>{userProfile?.role === 'authority' ? 'Tourism Authority' : userProfile?.role === 'business_owner' ? 'Business Partner' : 'Tourist'}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 text-xs">
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          onOpenProfileModal && onOpenProfileModal();
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100 font-semibold flex items-center gap-2 cursor-pointer transition-colors"
+                      >
+                        <User className="w-3.5 h-3.5 text-cyan-600" />
+                        <span>Manage Profile</span>
+                      </button>
+
+                      {userProfile?.role === 'business_owner' && (
+                        <button
+                          onClick={() => handleNavClick('business')}
+                          className="w-full text-left px-3 py-2 rounded-xl text-teal-800 bg-teal-50/60 hover:bg-teal-100 font-bold flex items-center gap-2 cursor-pointer transition-colors"
+                        >
+                          <Building2 className="w-3.5 h-3.5 text-teal-700" />
+                          <span>Owner Portal Dashboard</span>
+                        </button>
+                      )}
+
+                      {userProfile?.role === 'authority' && (
+                        <button
+                          onClick={() => handleNavClick('authority')}
+                          className="w-full text-left px-3 py-2 rounded-xl text-blue-900 bg-blue-50/60 hover:bg-blue-100 font-bold flex items-center gap-2 cursor-pointer transition-colors"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
+                          <span>Authority Command Center</span>
+                        </button>
+                      )}
+
+                      <div className="border-t border-slate-100 pt-1">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 font-bold flex items-center gap-2 cursor-pointer transition-colors"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <button
                 onClick={() => onOpenAuthModal && onOpenAuthModal('login')}
@@ -361,31 +433,35 @@ export default function Navbar({
           {/* Mobile Auth Status Bar */}
           <div className="pt-3 border-t border-slate-200">
             {isAuthenticated ? (
-              <div className="flex items-center justify-between px-1">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onOpenProfileModal && onOpenProfileModal();
-                  }}
-                  className="flex items-center gap-2.5 text-left cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center">
-                    {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-600 to-cyan-500 text-white font-bold text-xs flex items-center justify-center">
+                      {(userProfile?.name || user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900">{userProfile?.name || user?.displayName || 'User'}</div>
+                      <div className="text-[10px] text-teal-600 font-extrabold uppercase">
+                        {userProfile?.role === 'authority' ? 'Tourism Authority' : userProfile?.role === 'business_owner' ? 'Business Partner' : 'Tourist'}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">{userProfile?.displayName || user?.displayName || 'My Profile'}</div>
-                    <div className="text-[10px] text-teal-600 font-bold uppercase">{userProfile?.role || 'Tourist'}</div>
-                  </div>
-                </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onOpenProfileModal && onOpenProfileModal();
+                    }}
+                    className="text-xs text-cyan-700 font-bold hover:underline cursor-pointer"
+                  >
+                    Profile
+                  </button>
+                </div>
                 <button
-                  onClick={() => {
-                    logout();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="text-xs text-red-600 font-semibold px-2 py-1 rounded hover:bg-red-50 flex items-center gap-1 cursor-pointer"
+                  onClick={handleLogout}
+                  className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Logout</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             ) : (

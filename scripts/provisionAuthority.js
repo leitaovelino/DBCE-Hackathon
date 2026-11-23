@@ -16,7 +16,9 @@
  *   to cryptographically stamp 'role: "authority"' onto the user's Auth token.
  */
 
-import admin from 'firebase-admin';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
@@ -37,11 +39,12 @@ let credential = null;
 
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS && existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)) {
   console.log(`Using credentials from GOOGLE_APPLICATION_CREDENTIALS: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
-  credential = admin.credential.applicationDefault();
+  const serviceAccount = JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
+  credential = cert(serviceAccount);
 } else if (existsSync(defaultKeyPath)) {
   console.log(`Using credentials from local file: ${defaultKeyPath}`);
   const serviceAccount = JSON.parse(readFileSync(defaultKeyPath, 'utf8'));
-  credential = admin.credential.cert(serviceAccount);
+  credential = cert(serviceAccount);
 } else {
   console.error('\x1b[31m%s\x1b[0m', 'Error: No Firebase Admin service account key found.');
   console.log('\nTo configure:');
@@ -52,18 +55,17 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS && existsSync(process.env.GOOGLE_
 }
 
 // Initialize Firebase Admin
+let app;
 try {
-  admin.initializeApp({
-    credential: credential
-  });
+  app = getApps().length ? getApps()[0] : initializeApp({ credential });
 } catch (e) {
   console.error('Failed to initialize Firebase Admin SDK:', e.message);
   process.exit(1);
 }
 
 async function provisionAuthority() {
-  const auth = admin.auth();
-  const db = admin.firestore();
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
   let userRecord;
   try {
@@ -96,7 +98,7 @@ async function provisionAuthority() {
     uid: userRecord.uid,
     email: userRecord.email,
     role: 'authority',
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    updatedAt: FieldValue.serverTimestamp()
   }, { merge: true });
 
   console.log('\x1b[32m%s\x1b[0m', '\n✓ SUCCESS: Authority Custom Claim successfully provisioned!');

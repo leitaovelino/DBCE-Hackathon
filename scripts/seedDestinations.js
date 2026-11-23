@@ -43,25 +43,27 @@ console.log('       GOASMART FIRESTORE DESTINATION SEEDING UTILITY');
 console.log('===============================================================\n');
 
 async function seedWithAdmin() {
-  const { default: admin } = await import('firebase-admin');
+  const { initializeApp, cert, getApps } = await import('firebase-admin/app');
+  const { getFirestore, FieldValue } = await import('firebase-admin/firestore');
   const serviceAccountPath = resolve(process.cwd(), 'serviceAccountKey.json');
+  let app;
 
   if (existsSync(serviceAccountPath)) {
     console.log(`Using Firebase Admin SDK with credentials from: ${serviceAccountPath}`);
     const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'));
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+    app = getApps().length ? getApps()[0] : initializeApp({
+      credential: cert(serviceAccount)
     });
   } else if (envVars.VITE_FIREBASE_PROJECT_ID) {
     console.log(`Initializing Firebase Admin with Project ID: ${envVars.VITE_FIREBASE_PROJECT_ID}`);
-    admin.initializeApp({
+    app = getApps().length ? getApps()[0] : initializeApp({
       projectId: envVars.VITE_FIREBASE_PROJECT_ID
     });
   } else {
     throw new Error('No serviceAccountKey.json or VITE_FIREBASE_PROJECT_ID found.');
   }
 
-  const db = admin.firestore();
+  const db = getFirestore(app);
   let seededCount = 0;
 
   for (const dest of DESTINATIONS) {
@@ -97,7 +99,7 @@ async function seedWithAdmin() {
       weather: dest.weather || { temp: 30, condition: 'Sunny' },
       hourlyCrowdTrend: dest.hourlyCrowdTrend || [],
       isActive: true,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     };
 
     await db.collection('destinations').doc(dest.id).set(payload, { merge: true });

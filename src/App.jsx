@@ -356,6 +356,10 @@ export default function App() {
       <UserProfileModal
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
+        onLogoutSuccess={() => {
+          setActiveView('tourist');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         onSwitchAccount={() => {
           setProfileModalOpen(false);
           setAuthModalMode('login');

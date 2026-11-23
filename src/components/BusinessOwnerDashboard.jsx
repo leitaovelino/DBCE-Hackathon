@@ -1,14 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Edit3, Trash2, Check, X, Users, DollarSign, Eye, MessageSquare, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Building2, Plus, Edit3, Trash2, Check, X, Users, DollarSign, Eye, MessageSquare, ShieldCheck, ArrowRight, Sparkles, LogOut, Store } from 'lucide-react';
 import { getBusinesses, getBusinessesFromFirestore, addBusiness, updateBusiness, getBookings, updateBookingStatus } from '../services/businessService';
 import { MARKETPLACE_CATEGORIES } from '../data/businesses';
 import { useAuth } from '../context/AuthContext';
 
 export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile, logout } = useAuth();
   const [businesses, setBusinesses] = useState(() => getBusinesses());
   const [bookings, setBookings] = useState(() => getBookings());
   const [activeTab, setActiveTab] = useState('listings'); // 'listings', 'bookings', 'new-listing'
+
+  // Owner's listings: strictly filter by the authenticated user UID
+  const ownerListings = useMemo(() => {
+    if (!currentUser?.uid) return [];
+    return businesses.filter((b) => b.ownerUid === currentUser.uid);
+  }, [businesses, currentUser?.uid]);
+
+  const handleLogout = async () => {
+    await logout();
+    if (onBackToMarketplace) onBackToMarketplace();
+  };
 
   // Load from Firestore
   useEffect(() => {
@@ -124,7 +135,13 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="font-bold text-slate-700 truncate max-w-[140px]">
+                {userProfile?.name || currentUser?.displayName || currentUser?.email || 'Partner'}
+              </span>
+            </div>
             <button
               onClick={() => {
                 setEditingBizId(null);
@@ -137,9 +154,18 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
             </button>
             <button
               onClick={onBackToMarketplace}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              Marketplace View
+              <Store className="w-3.5 h-3.5" />
+              <span>Marketplace</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+              title="Sign Out of Business Partner Account"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -201,7 +227,7 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            My Listings ({businesses.length})
+            My Listings ({ownerListings.length})
           </button>
           <button
             onClick={() => setActiveTab('bookings')}
@@ -231,48 +257,70 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
         {/* Tab 1: My Listings View */}
         {activeTab === 'listings' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {businesses.map((biz) => (
-                <div
-                  key={biz.id}
-                  className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between"
+            {ownerListings.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <h4 className="font-extrabold text-slate-800 text-base">No active listings under your account</h4>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  You have not published any business listings yet. Click below to add your homestay, local restaurant, kayak tour, or cultural experience.
+                </p>
+                <button
+                  onClick={() => {
+                    setEditingBizId(null);
+                    setActiveTab('new-listing');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
                 >
-                  <div className="flex gap-4">
-                    <img
-                      src={biz.image}
-                      alt={biz.name}
-                      className="w-20 h-20 rounded-xl object-cover shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full">
-                          {biz.category}
-                        </span>
-                        <span className="text-xs font-black text-slate-800">
-                          ₹{biz.startingPrice} <span className="text-[10px] text-slate-400 font-normal">/{biz.priceUnit}</span>
-                        </span>
+                  <Plus className="w-4 h-4" />
+                  <span>Create Your First Listing</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ownerListings.map((biz) => (
+                  <div
+                    key={biz.id}
+                    className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between"
+                  >
+                    <div className="flex gap-4">
+                      <img
+                        src={biz.image}
+                        alt={biz.name}
+                        className="w-20 h-20 rounded-xl object-cover shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full">
+                            {biz.category}
+                          </span>
+                          <span className="text-xs font-black text-slate-800">
+                            ₹{biz.startingPrice} <span className="text-[10px] text-slate-400 font-normal">/{biz.priceUnit}</span>
+                          </span>
+                        </div>
+                        <h4 className="font-extrabold text-slate-900 text-sm mt-1 truncate">{biz.name}</h4>
+                        <p className="text-[11px] text-slate-500 mt-0.5">{biz.location} ({biz.region})</p>
+                        <p className="text-[11px] text-slate-600 line-clamp-1 mt-1">{biz.description}</p>
                       </div>
-                      <h4 className="font-extrabold text-slate-900 text-sm mt-1 truncate">{biz.name}</h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{biz.location} ({biz.region})</p>
-                      <p className="text-[11px] text-slate-600 line-clamp-1 mt-1">{biz.description}</p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="text-[11px] text-slate-400">
+                        Rating: <strong>{biz.rating} ★</strong> ({biz.reviewsCount} reviews)
+                      </span>
+                      <button
+                        onClick={() => handleStartEdit(biz)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit Details</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-[11px] text-slate-400">
-                      Rating: <strong>{biz.rating} ★</strong> ({biz.reviewsCount} reviews)
-                    </span>
-                    <button
-                      onClick={() => handleStartEdit(biz)}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Edit Details</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
