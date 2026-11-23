@@ -27,6 +27,7 @@ import { useAuth } from './context/AuthContext';
 import AuthModal from './components/AuthModal';
 import UserProfileModal from './components/UserProfileModal';
 import ProtectedAccessGuard from './components/ProtectedAccessGuard';
+import ErrorBoundary from './components/ErrorBoundary';
 
 import { DESTINATIONS } from './data/destinations';
 import { translations } from './data/translations';
@@ -73,7 +74,7 @@ export default function App() {
   const [authModalMode, setAuthModalMode] = useState('login'); // 'login' | 'register'
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
-  const { user, userProfile, role, isAuthenticated } = useAuth();
+  const { user, userProfile, role, isAuthenticated, hasAuthorityClaim } = useAuth();
 
   // Persistent Favorites in localStorage
   const [savedFavorites, setSavedFavorites] = useState(() => {
@@ -277,15 +278,17 @@ export default function App() {
           />
         )}
 
-        {/* View 8: Phase 4 Local Business Owner Portal (Protected: Business Owner or Authority) */}
+        {/* View 8: Phase 4 Local Business Owner Portal (Protected: Business Owner Only) */}
         {activeView === 'business' && (
-          (role === 'business_owner' || role === 'authority') ? (
-            <BusinessOwnerDashboard
-              onBackToMarketplace={() => {
-                setActiveView('marketplace');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
+          (role === 'business_owner') ? (
+            <ErrorBoundary onBackToExplore={() => setActiveView('tourist')}>
+              <BusinessOwnerDashboard
+                onBackToMarketplace={() => {
+                  setActiveView('marketplace');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            </ErrorBoundary>
           ) : (
             <ProtectedAccessGuard
               requiredRole="business_owner"
@@ -298,16 +301,18 @@ export default function App() {
           )
         )}
 
-        {/* View 9: Phase 4 Tourism Authority Analytics Dashboard (Protected: Authority Only) */}
+        {/* View 9: Phase 4 Tourism Authority Analytics Dashboard (Protected: Verified Authority Only) */}
         {activeView === 'authority' && (
-          (role === 'authority') ? (
-            <TourismAuthorityDashboard
-              onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
-              onNavigateToMarketplace={() => {
-                setActiveView('marketplace');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
+          (role === 'authority' && hasAuthorityClaim) ? (
+            <ErrorBoundary onBackToExplore={() => setActiveView('tourist')}>
+              <TourismAuthorityDashboard
+                onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
+                onNavigateToMarketplace={() => {
+                  setActiveView('marketplace');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            </ErrorBoundary>
           ) : (
             <ProtectedAccessGuard
               requiredRole="authority"

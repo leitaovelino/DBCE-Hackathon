@@ -33,8 +33,21 @@ export function AuthProvider({ children }) {
     // 1. Verify Authority via Firebase ID Token Custom Claims (cryptographically signed)
     let tokenHasAuthority = false;
     try {
-      const idTokenResult = await firebaseUser.getIdTokenResult(forceRefresh);
+      let idTokenResult = await firebaseUser.getIdTokenResult(forceRefresh);
       tokenHasAuthority = Boolean(idTokenResult.claims && idTokenResult.claims.role === 'authority');
+
+      // If cached token does not show authority, but we haven't forced a refresh yet,
+      // force-refresh once to check if an admin just stamped custom claims
+      if (!tokenHasAuthority && !forceRefresh) {
+        try {
+          const freshTokenResult = await firebaseUser.getIdTokenResult(true);
+          if (freshTokenResult.claims && freshTokenResult.claims.role === 'authority') {
+            tokenHasAuthority = true;
+          }
+        } catch (refreshErr) {
+          console.warn('Silent token claim refresh check:', refreshErr);
+        }
+      }
     } catch (e) {
       console.warn('Could not inspect Firebase ID token claims:', e);
     }
@@ -49,7 +62,7 @@ export function AuthProvider({ children }) {
       } else {
         profile = {
           uid: firebaseUser.uid,
-          name: firebaseUser.displayName || 'Traveler',
+          name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'Traveler'),
           email: firebaseUser.email,
           role: tokenHasAuthority ? 'authority' : 'tourist'
         };
@@ -58,23 +71,30 @@ export function AuthProvider({ children }) {
       console.error('Error fetching Firestore profile:', error);
       profile = {
         uid: firebaseUser.uid,
-        name: firebaseUser.displayName || 'Traveler',
+        name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'Traveler'),
         email: firebaseUser.email,
         role: tokenHasAuthority ? 'authority' : 'tourist'
       };
     }
 
     // 3. Security Authority Policy:
-    // Authority privilege strictly requires token.role == 'authority'.
-    // If token has authority claim, grant authority role.
-    // If Firestore profile claims 'authority' but token lacks claim, downgrade to 'tourist'.
-    let effectiveRole = profile.role || 'tourist';
+    // - Authority privilege STRICTLY requires token.role == 'authority'.
+    // - A user with token.role == 'authority' is ALWAYS assigned role = 'authority',
+    //   preventing any accidental misidentification as 'business_owner'.
+    // - A user with role == 'authority' in Firestore but NO verified custom claim is
+    //   STRICTLY downgraded to 'tourist'.
+    // - A user without authority claims retains their genuine Firestore role ('business_owner' or 'tourist').
+    let effectiveRole = 'tourist';
     if (tokenHasAuthority) {
       effectiveRole = 'authority';
-    } else if (effectiveRole === 'authority' && !tokenHasAuthority) {
+    } else if (profile.role === 'authority' && !tokenHasAuthority) {
       console.warn(
         'Security Alert: Firestore document marked as authority, but Firebase Auth ID Token lacks verified custom claim. Access downgraded to tourist.'
       );
+      effectiveRole = 'tourist';
+    } else if (profile.role === 'business_owner') {
+      effectiveRole = 'business_owner';
+    } else {
       effectiveRole = 'tourist';
     }
 
@@ -219,7 +239,16 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-4">
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center mb-4">
+            <div className="w-6 h-6 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          </div>
+          <p className="text-xs font-semibold text-slate-300">Loading GoaSmart Platform...</p>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
