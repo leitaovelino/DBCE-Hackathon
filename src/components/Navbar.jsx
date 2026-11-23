@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Map, Star, Bot, Users, Calendar, Store } from 'lucide-react';
+import { Compass, Heart, Globe, Menu, X, MapPin, Sparkles, Building2, ShieldCheck, Map, Star, Bot, Users, Calendar, Store, User, LogIn, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({
   currentLang,
@@ -8,10 +9,13 @@ export default function Navbar({
   savedCount,
   onOpenFavorites,
   activeView,
-  setActiveView
+  setActiveView,
+  onOpenAuthModal,
+  onOpenProfileModal
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const { user, userProfile, isAuthenticated, logout } = useAuth();
 
   const languages = [
     { code: 'en', label: 'English', short: 'EN' },
@@ -228,6 +232,35 @@ export default function Navbar({
               )}
             </button>
 
+            {/* Authentication Buttons / Profile */}
+            {isAuthenticated ? (
+              <button
+                onClick={onOpenProfileModal}
+                className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer group"
+                title="Manage Profile"
+              >
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-600 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                  {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : (user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U')}
+                </div>
+                <div className="text-left hidden md:block">
+                  <div className="text-xs font-bold text-slate-800 leading-tight group-hover:text-teal-700 truncate max-w-[80px]">
+                    {userProfile?.displayName || user?.displayName || 'User'}
+                  </div>
+                  <div className="text-[9px] uppercase font-extrabold tracking-wider text-teal-600">
+                    {userProfile?.role === 'authority' ? 'Gov Official' : userProfile?.role === 'business_owner' ? 'Business' : 'Tourist'}
+                  </div>
+                </div>
+              </button>
+            ) : (
+              <button
+                onClick={() => onOpenAuthModal && onOpenAuthModal('login')}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 rounded-lg shadow-sm shadow-teal-600/20 transition-all cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
+
             {/* Mobile Hamburger Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -324,6 +357,61 @@ export default function Navbar({
             <ShieldCheck className="w-4 h-4 text-blue-600" />
             <span>{t.nav.authority}</span>
           </button>
+
+          {/* Mobile Auth Status Bar */}
+          <div className="pt-3 border-t border-slate-200">
+            {isAuthenticated ? (
+              <div className="flex items-center justify-between px-1">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenProfileModal && onOpenProfileModal();
+                  }}
+                  className="flex items-center gap-2.5 text-left cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-bold text-xs flex items-center justify-center">
+                    {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900">{userProfile?.displayName || user?.displayName || 'My Profile'}</div>
+                    <div className="text-[10px] text-teal-600 font-bold uppercase">{userProfile?.role || 'Tourist'}</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-xs text-red-600 font-semibold px-2 py-1 rounded hover:bg-red-50 flex items-center gap-1 cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAuthModal && onOpenAuthModal('login');
+                  }}
+                  className="flex-1 py-2 rounded-lg bg-teal-600 text-white font-bold text-xs text-center flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAuthModal && onOpenAuthModal('register');
+                  }}
+                  className="flex-1 py-2 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs text-center border border-slate-200 cursor-pointer"
+                >
+                  <span>Register</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>

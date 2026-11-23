@@ -22,6 +22,12 @@ import LocalBusinessMarketplace from './components/LocalBusinessMarketplace';
 import BusinessOwnerDashboard from './components/BusinessOwnerDashboard';
 import TourismAuthorityDashboard from './components/TourismAuthorityDashboard';
 
+// Phase 5 Auth & RBAC
+import { useAuth } from './context/AuthContext';
+import AuthModal from './components/AuthModal';
+import UserProfileModal from './components/UserProfileModal';
+import ProtectedAccessGuard from './components/ProtectedAccessGuard';
+
 import { DESTINATIONS } from './data/destinations';
 import { translations } from './data/translations';
 
@@ -33,6 +39,13 @@ export default function App() {
   const [activeRegion, setActiveRegion] = useState('All');
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
+
+  // Auth & Profile Modal State
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login'); // 'login' | 'register'
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+  const { user, userProfile, role, isAuthenticated } = useAuth();
 
   // Persistent Favorites in localStorage
   const [savedFavorites, setSavedFavorites] = useState(() => {
@@ -116,6 +129,11 @@ export default function App() {
         onOpenFavorites={() => setIsFavoritesOpen(true)}
         activeView={activeView}
         setActiveView={setActiveView}
+        onOpenAuthModal={(mode = 'login') => {
+          setAuthModalMode(mode);
+          setAuthModalOpen(true);
+        }}
+        onOpenProfileModal={() => setProfileModalOpen(true)}
       />
 
       {/* Realtime Crowd Status Marquee Ticker */}
@@ -222,25 +240,47 @@ export default function App() {
           />
         )}
 
-        {/* View 8: Phase 4 Local Business Owner Portal */}
+        {/* View 8: Phase 4 Local Business Owner Portal (Protected: Business Owner or Authority) */}
         {activeView === 'business' && (
-          <BusinessOwnerDashboard
-            onBackToMarketplace={() => {
-              setActiveView('marketplace');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
+          (role === 'business_owner' || role === 'authority') ? (
+            <BusinessOwnerDashboard
+              onBackToMarketplace={() => {
+                setActiveView('marketplace');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          ) : (
+            <ProtectedAccessGuard
+              requiredRole="business_owner"
+              onOpenAuth={(mode) => {
+                setAuthModalMode(mode || 'login');
+                setAuthModalOpen(true);
+              }}
+              onBackToExplore={() => setActiveView('tourist')}
+            />
+          )
         )}
 
-        {/* View 9: Phase 4 Tourism Authority Analytics Dashboard */}
+        {/* View 9: Phase 4 Tourism Authority Analytics Dashboard (Protected: Authority Only) */}
         {activeView === 'authority' && (
-          <TourismAuthorityDashboard
-            onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
-            onNavigateToMarketplace={() => {
-              setActiveView('marketplace');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
+          (role === 'authority') ? (
+            <TourismAuthorityDashboard
+              onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
+              onNavigateToMarketplace={() => {
+                setActiveView('marketplace');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          ) : (
+            <ProtectedAccessGuard
+              requiredRole="authority"
+              onOpenAuth={(mode) => {
+                setAuthModalMode(mode || 'login');
+                setAuthModalOpen(true);
+              }}
+              onBackToExplore={() => setActiveView('tourist')}
+            />
+          )
         )}
       </main>
 
@@ -266,6 +306,24 @@ export default function App() {
         onRemoveFavorite={handleToggleFavorite}
         onClearFavorites={handleClearFavorites}
         onSelectDestination={(dest) => setSelectedDestination(dest)}
+      />
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authModalMode}
+      />
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        onSwitchAccount={() => {
+          setProfileModalOpen(false);
+          setAuthModalMode('login');
+          setAuthModalOpen(true);
+        }}
       />
 
       {/* Comprehensive Footer */}
