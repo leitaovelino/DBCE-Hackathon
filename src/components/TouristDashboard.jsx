@@ -13,6 +13,7 @@ export default function TouristDashboard({
   setActiveCategory,
   activeRegion,
   setActiveRegion,
+  loading = false,
   t
 }) {
   const [onlyPeaceful, setOnlyPeaceful] = useState(false);
@@ -193,7 +194,18 @@ export default function TouristDashboard({
         </div>
 
         {/* Destinations Grid */}
-        {filteredDestinations.length === 0 ? (
+        {loading && filteredDestinations.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-3xl h-96 border border-slate-200 overflow-hidden p-4 space-y-4 shadow-xs">
+                <div className="bg-slate-200 h-48 rounded-2xl w-full"></div>
+                <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                <div className="h-10 bg-slate-100 rounded-xl w-full mt-4"></div>
+              </div>
+            ))}
+          </div>
+        ) : filteredDestinations.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 max-w-lg mx-auto space-y-3">
             <AlertCircle className="w-10 h-10 text-amber-500 mx-auto" />
             <h3 className="text-base font-bold text-slate-800">No destinations found</h3>

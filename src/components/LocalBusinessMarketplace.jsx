@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Store, Search, Filter, MapPin, Star, Heart, ArrowUpRight, DollarSign, Calendar, Users, ShieldCheck, CheckCircle2, Clock, Phone, Sparkles, X, ChevronRight } from 'lucide-react';
-import { getBusinesses, createBooking } from '../services/businessService';
+import { getBusinesses, getBusinessesFromFirestore, createBooking } from '../services/businessService';
 import { MARKETPLACE_CATEGORIES } from '../data/businesses';
 
 export default function LocalBusinessMarketplace({
@@ -8,6 +8,27 @@ export default function LocalBusinessMarketplace({
   t
 }) {
   const [businesses, setBusinesses] = useState(() => getBusinesses());
+  const [loadingListings, setLoadingListings] = useState(false);
+
+  // Sync with Firestore business listings
+  useEffect(() => {
+    let isMounted = true;
+    async function loadLiveBusinesses() {
+      setLoadingListings(true);
+      try {
+        const liveListings = await getBusinessesFromFirestore();
+        if (isMounted && liveListings && liveListings.length > 0) {
+          setBusinesses(liveListings);
+        }
+      } catch (e) {
+        console.warn('Using local business listings cache:', e);
+      } finally {
+        if (isMounted) setLoadingListings(false);
+      }
+    }
+    loadLiveBusinesses();
+    return () => { isMounted = false; };
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All Categories');
   const [activeRegion, setActiveRegion] = useState('All');

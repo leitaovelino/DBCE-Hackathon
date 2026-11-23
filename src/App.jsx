@@ -30,6 +30,7 @@ import ProtectedAccessGuard from './components/ProtectedAccessGuard';
 
 import { DESTINATIONS } from './data/destinations';
 import { translations } from './data/translations';
+import { getDestinations } from './services/destinationService';
 
 export default function App() {
   const [currentLang, setLang] = useState('en');
@@ -39,6 +40,30 @@ export default function App() {
   const [activeRegion, setActiveRegion] = useState('All');
   const [selectedDestination, setSelectedDestination] = useState(null);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
+
+  // Firestore Destinations State (with immediate local fallback)
+  const [destinations, setDestinations] = useState(DESTINATIONS);
+  const [destinationsLoading, setDestinationsLoading] = useState(true);
+
+  // Load live destinations from Cloud Firestore
+  useEffect(() => {
+    let isMounted = true;
+    async function loadLiveDestinations() {
+      setDestinationsLoading(true);
+      try {
+        const liveData = await getDestinations();
+        if (isMounted && liveData && liveData.length > 0) {
+          setDestinations(liveData);
+        }
+      } catch (err) {
+        console.warn('Using local destinations fallback:', err);
+      } finally {
+        if (isMounted) setDestinationsLoading(false);
+      }
+    }
+    loadLiveDestinations();
+    return () => { isMounted = false; };
+  }, []);
 
   // Auth & Profile Modal State
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -82,7 +107,7 @@ export default function App() {
   };
 
   const handleSelectDestinationById = (id) => {
-    const found = DESTINATIONS.find((d) => d.id === id);
+    const found = destinations.find((d) => d.id === id);
     if (found) {
       setSelectedDestination(found);
     }
@@ -138,7 +163,7 @@ export default function App() {
 
       {/* Realtime Crowd Status Marquee Ticker */}
       <CrowdStatusTicker
-        destinations={DESTINATIONS}
+        destinations={destinations}
         onSelectDestination={handleSelectDestinationById}
       />
 
@@ -160,7 +185,8 @@ export default function App() {
             />
 
             <TouristDashboard
-              destinations={DESTINATIONS}
+              destinations={destinations}
+              loading={destinationsLoading}
               savedFavorites={savedFavorites}
               onToggleFavorite={handleToggleFavorite}
               onSelectDestination={(dest) => setSelectedDestination(dest)}
@@ -204,6 +230,7 @@ export default function App() {
         {/* View 4: Phase 2 Interactive Goa Map */}
         {activeView === 'map' && (
           <InteractiveMap
+            destinations={destinations}
             onSelectDestinationModal={(dest) => setSelectedDestination(dest)}
             savedFavorites={savedFavorites}
             onToggleFavorite={handleToggleFavorite}
@@ -288,7 +315,7 @@ export default function App() {
       {selectedDestination && (
         <DestinationModal
           destination={selectedDestination}
-          allDestinations={DESTINATIONS}
+          allDestinations={destinations}
           isFavorite={savedFavorites.includes(selectedDestination.id)}
           onToggleFavorite={handleToggleFavorite}
           onClose={() => setSelectedDestination(null)}
@@ -302,7 +329,7 @@ export default function App() {
         isOpen={isFavoritesOpen}
         onClose={() => setIsFavoritesOpen(false)}
         favorites={savedFavorites}
-        allDestinations={DESTINATIONS}
+        allDestinations={destinations}
         onRemoveFavorite={handleToggleFavorite}
         onClearFavorites={handleClearFavorites}
         onSelectDestination={(dest) => setSelectedDestination(dest)}

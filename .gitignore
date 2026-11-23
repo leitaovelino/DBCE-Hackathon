@@ -27,3 +27,11 @@ dist-ssr
 .env
 .env.production
 .env.local
+
+# Service Account Keys
+serviceAccountKey.json
+*serviceAccount*.json
+
+# Service Account Keys
+serviceAccountKey.json
+*serviceAccount*.json

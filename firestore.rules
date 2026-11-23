@@ -2,54 +2,108 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
+    // ==========================================
+    // HELPER FUNCTIONS & AUTHORIZATION PREDICATES
+    // ==========================================
+    
+    // Check if user is signed in to Firebase Auth
     function isAuthenticated() {
       return request.auth != null;
     }
     
+    // Check if the authenticated user owns this specific user document
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User Profiles Collection
+    // Cryptographically verified Authority check:
+    // Requires a Firebase Authentication Custom Claim assigned via Admin SDK.
+    // Client-side Firestore document fields alone CANNOT bypass this.
+    function isAuthority() {
+      return isAuthenticated() && request.auth.token.role == 'authority';
+    }
+
+    // ==========================================
+    // 1. USER PROFILES COLLECTION
+    // ==========================================
     match /users/{userId} {
       // Users can only read their own profile document
       allow read: if isOwner(userId);
       
-      // Allow user creation on signup:
-      // Prevent privilege escalation - cannot self-assign 'authority' role
+      // Allow profile creation on signup:
+      // - Document path ID must strictly match authenticated UID
+      // - Stored internal uid must match authenticated UID
+      // - Role is required and strictly constrained to 'tourist' or 'business_owner'
+      // - Prohibits self-registration as 'authority'
       allow create: if isOwner(userId) 
-                    && (!('role' in request.resource.data) || request.resource.data.role in ['tourist', 'business_owner']);
+                    && request.resource.data.uid == userId
+                    && ('role' in request.resource.data)
+                    && (request.resource.data.role in ['tourist', 'business_owner'])
+                    && ('email' in request.resource.data);
       
-      // Allow profile update (e.g. displayName, phone, bio) but prevent role modification
+      // Allow profile updates:
+      // - Document path ID must match authenticated UID
+      // - Sensitive immutable security fields cannot be altered: uid, email, role
+      // - Preserves createdAt timestamp integrity
       allow update: if isOwner(userId)
-                    && request.resource.data.role == resource.data.role;
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.email == resource.data.email
+                    && request.resource.data.role == resource.data.role
+                    && (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
       
-      // Allow user to delete their account profile
+      // Allow user to delete their own account profile
       allow delete: if isOwner(userId);
     }
 
-    // Local Businesses Collection
+    // ==========================================
+    // 2. DESTINATIONS COLLECTION (Phase 6)
+    // ==========================================
+    match /destinations/{destinationId} {
+      // Anyone can discover and view active tourist destinations
+      allow read: if true;
+      
+      // Only verified Tourism Authority officials (with custom claims) can create, update, or delete destinations
+      allow write: if isAuthority();
+    }
+
+    // ==========================================
+    // 3. LOCAL BUSINESS LISTINGS COLLECTION
+    // ==========================================
     match /businesses/{businessId} {
       // Anyone can discover local Goan businesses and marketplace listings
       allow read: if true;
       
-      // Only authenticated users can register their business
+      // Creation: Authenticated user; ownerUid must match their authenticated UID
       allow create: if isAuthenticated() 
+                    && ('ownerUid' in request.resource.data)
                     && request.resource.data.ownerUid == request.auth.uid;
       
-      // Only the listing owner can update or delete their business listing
-      allow update, delete: if isAuthenticated() 
-                            && resource.data.ownerUid == request.auth.uid;
+      // Update: Only the listing owner can update their listing;
+      // Listing ownership cannot be transferred (ownerUid is immutable)
+      allow update: if isAuthenticated() 
+                    && resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.ownerUid == resource.data.ownerUid;
+      
+      // Delete: Only the listing owner or verified Tourism Authority can delete
+      allow delete: if isAuthenticated() 
+                    && (resource.data.ownerUid == request.auth.uid || isAuthority());
     }
 
-    // Telemetry and Nudges Collection (Phase 3 & Phase 4 Authority telemetry)
+    // ==========================================
+    // 4. OFFICIAL TELEMETRY & TOURIST NUDGES
+    // ==========================================
     match /nudges/{nudgeId} {
+      // Publicly readable for tourist alerts and crowd distribution nudges
       allow read: if true;
-      allow write: if isAuthenticated();
+      
+      // Strictly restricted to verified Tourism Authority accounts (with custom claims)
+      // Tourists and Business Owners are denied write, update, or delete access
+      allow create, update, delete: if isAuthority();
     }
 
-    // Default deny all other collections
+    // ==========================================
+    // 5. DEFAULT DENY ALL OTHER COLLECTIONS
+    // ==========================================
     match /{document=**} {
       allow read, write: if false;
     }

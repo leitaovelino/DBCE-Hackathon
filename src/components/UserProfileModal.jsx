@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { X, User, Mail, ShieldCheck, Calendar, LogOut, Check, Edit2, Building2, Compass, AlertCircle } from 'lucide-react';
+import { X, User, Mail, ShieldCheck, Calendar, LogOut, Check, Edit2, Building2, Compass, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function UserProfileModal({ isOpen, onClose, onLogoutSuccess }) {
-  const { currentUser, userProfile, updateUserName, logout } = useAuth();
+  const { currentUser, userProfile, updateUserName, logout, refreshAuthorityToken, hasAuthorityClaim } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(userProfile?.name || currentUser?.displayName || '');
   const [saving, setSaving] = useState(false);
+  const [refreshingToken, setRefreshingToken] = useState(false);
   const [msg, setMsg] = useState('');
 
   if (!isOpen || !currentUser) return null;
@@ -19,6 +20,23 @@ export default function UserProfileModal({ isOpen, onClose, onLogoutSuccess }) {
 
   const currentRoleInfo = roleLabels[userProfile?.role] || roleLabels.tourist;
   const RoleIcon = currentRoleInfo.icon;
+
+  const handleRefreshClaims = async () => {
+    setRefreshingToken(true);
+    try {
+      const isClaimed = await refreshAuthorityToken();
+      if (isClaimed) {
+        setMsg('Verified Authority Custom Claim loaded successfully.');
+      } else {
+        setMsg('Token refreshed: Standard user privileges confirmed.');
+      }
+      setTimeout(() => setMsg(''), 4000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRefreshingToken(false);
+    }
+  };
 
   const handleSaveName = async (e) => {
     e.preventDefault();
@@ -90,8 +108,18 @@ export default function UserProfileModal({ isOpen, onClose, onLogoutSuccess }) {
               </span>
               <span className="text-[10px] text-slate-400 font-mono">UID: {currentUser.uid.slice(0, 8)}...</span>
             </div>
-            <p className="text-[11px] text-slate-500 italic pt-1">
-              *Roles are secured in Cloud Firestore and enforced server-side. Role changes require administrator approval.
+            <p className="text-[11px] text-slate-500 italic pt-1 flex items-center justify-between">
+              <span>*Roles are enforced server-side via Firebase Custom Claims & security rules.</span>
+              <button
+                type="button"
+                onClick={handleRefreshClaims}
+                disabled={refreshingToken}
+                className="text-cyan-700 hover:text-cyan-800 font-bold inline-flex items-center gap-1 cursor-pointer ml-2 not-italic"
+                title="Force refresh token claims from Firebase Auth"
+              >
+                <RefreshCw className={`w-3 h-3 ${refreshingToken ? 'animate-spin' : ''}`} />
+                <span>{refreshingToken ? 'Refreshing...' : 'Sync Claims'}</span>
+              </button>
             </p>
           </div>
 
