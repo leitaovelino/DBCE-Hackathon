@@ -44,28 +44,51 @@ function normalizeBusinessDoc(docSnap) {
   const data = docSnap.data();
   const id = docSnap.id;
 
+  // Resolve startingPrice and price safely:
+  // Support both startingPrice and price fields, avoiding 0 overrides when valid price exists
+  let resolvedPrice = 500;
+  if (data.startingPrice !== undefined && data.startingPrice !== null && !isNaN(Number(data.startingPrice)) && Number(data.startingPrice) > 0) {
+    resolvedPrice = Number(data.startingPrice);
+  } else if (data.price !== undefined && data.price !== null && !isNaN(Number(data.price)) && Number(data.price) > 0) {
+    resolvedPrice = Number(data.price);
+  } else if (data.startingPrice !== undefined && data.startingPrice !== null && !isNaN(Number(data.startingPrice))) {
+    resolvedPrice = Math.max(0, Number(data.startingPrice));
+  } else if (data.price !== undefined && data.price !== null && !isNaN(Number(data.price))) {
+    resolvedPrice = Math.max(0, Number(data.price));
+  }
+
+  // Canonical ownerName with support for legacy fields
+  const resolvedOwnerName = data.ownerName || data.hostName || data.contactName || '';
+
+  const rawImage = data.imageUrl || data.image || '';
+
   return {
     id,
     ownerUid: data.ownerUid,
     name: data.name || 'Local Goan Enterprise',
+    ownerName: resolvedOwnerName,
     category: data.category || 'Homestay',
     description: data.description || '',
     region: data.region || 'South Goa',
     taluka: data.taluka || data.region || '',
     location: data.address || data.location || 'Goa',
     address: data.address || data.location || 'Goa',
-    startingPrice: Number(data.price ?? data.startingPrice ?? 500),
-    price: Number(data.price ?? data.startingPrice ?? 500),
+    startingPrice: resolvedPrice,
+    price: resolvedPrice,
     priceUnit: data.priceUnit || 'per person',
-    image: data.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80',
+    image: rawImage || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80',
+    imageUrl: rawImage || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80',
+    storagePath: data.storagePath || null,
+    hasOwnerPhoto: Boolean(data.hasOwnerPhoto),
     contact: data.contact || '+91 98765 00000',
+    operatingHours: data.operatingHours || '10:00 AM - 06:00 PM',
     isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
     rating: data.rating || 5.0,
     reviewsCount: data.reviewsCount || 1,
     isLesserKnown: Boolean(data.isLesserKnown ?? true),
     isFairVisibilityFeatured: Boolean(data.isFairVisibilityFeatured ?? true),
     experiences: Array.isArray(data.experiences) && data.experiences.length > 0 ? data.experiences : [
-      { name: data.category || 'Local Experience', price: Number(data.price ?? data.startingPrice ?? 500), duration: '2 Hours', per: 'per person' }
+      { name: data.category || 'Local Experience', price: resolvedPrice, duration: '2 Hours', per: 'per person' }
     ],
     services: Array.isArray(data.services) ? data.services : ['Local Goan Hospitality'],
     createdAt: data.createdAt
@@ -139,24 +162,39 @@ export async function addBusiness(newBizData, ownerUid = null) {
   }
 
   const current = getBusinesses();
-  const price = Math.max(0, Number(newBizData.startingPrice || newBizData.price || 500));
+  
+  // Safely convert and validate starting price
+  const rawPrice = newBizData.startingPrice !== undefined && newBizData.startingPrice !== null
+    ? newBizData.startingPrice
+    : newBizData.price;
+  const parsedPrice = typeof rawPrice === 'string'
+    ? (rawPrice.trim() === '' ? 500 : parseFloat(rawPrice.trim()))
+    : Number(rawPrice);
+  const finalPrice = !isNaN(parsedPrice) && isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : 500;
 
   const resolvedOwnerUid = ownerUid || newBizData.ownerUid || 'anonymous-owner';
+  const resolvedOwnerName = (newBizData.ownerName || newBizData.hostName || newBizData.contactName || '').trim();
+  const resolvedImage = newBizData.imageUrl || newBizData.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80';
 
   const payload = {
     ownerUid: resolvedOwnerUid,
     name: newBizData.name.trim(),
+    ownerName: resolvedOwnerName,
     category: newBizData.category,
     description: newBizData.description || '',
     region: newBizData.region || 'South Goa',
     taluka: newBizData.taluka || '',
     address: newBizData.location || newBizData.address || 'Goa',
     location: newBizData.location || newBizData.address || 'Goa',
-    price: price,
-    startingPrice: price,
+    price: finalPrice,
+    startingPrice: finalPrice,
     priceUnit: newBizData.priceUnit || 'per person',
-    image: newBizData.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80',
+    image: resolvedImage,
+    imageUrl: resolvedImage,
+    storagePath: newBizData.storagePath || null,
+    hasOwnerPhoto: Boolean(newBizData.hasOwnerPhoto),
     contact: newBizData.contact || '+91 98765 00000',
+    operatingHours: newBizData.operatingHours || '10:00 AM - 06:00 PM',
     isActive: true,
     rating: 5.0,
     reviewsCount: 1,
@@ -164,7 +202,7 @@ export async function addBusiness(newBizData, ownerUid = null) {
     isFairVisibilityFeatured: true,
     experiences: Array.isArray(newBizData.experiences) && newBizData.experiences.length > 0
       ? newBizData.experiences
-      : [{ name: newBizData.category, price: price, duration: '2 Hours', per: 'per person' }],
+      : [{ name: newBizData.category, price: finalPrice, duration: '2 Hours', per: 'per person' }],
     services: Array.isArray(newBizData.services)
       ? newBizData.services
       : typeof newBizData.services === 'string'
@@ -205,6 +243,29 @@ export async function updateBusiness(id, updatedData, currentUid = null) {
   // Strip immutable security fields from update payload
   const { ownerUid, createdAt, id: _stripId, ...safeUpdates } = updatedData;
 
+  // Ensure price and startingPrice are both synchronized if price is being updated
+  if (safeUpdates.startingPrice !== undefined || safeUpdates.price !== undefined) {
+    const rawPrice = safeUpdates.startingPrice !== undefined ? safeUpdates.startingPrice : safeUpdates.price;
+    const parsed = typeof rawPrice === 'string'
+      ? (rawPrice.trim() === '' ? 500 : parseFloat(rawPrice.trim()))
+      : Number(rawPrice);
+    const validPrice = !isNaN(parsed) && isFinite(parsed) && parsed >= 0 ? parsed : 500;
+    safeUpdates.startingPrice = validPrice;
+    safeUpdates.price = validPrice;
+  }
+
+  // Ensure ownerName is updated cleanly if provided
+  if (safeUpdates.ownerName !== undefined) {
+    safeUpdates.ownerName = String(safeUpdates.ownerName).trim();
+  }
+
+  // Ensure image and imageUrl are synchronized
+  if (safeUpdates.imageUrl || safeUpdates.image) {
+    const img = safeUpdates.imageUrl || safeUpdates.image;
+    safeUpdates.image = img;
+    safeUpdates.imageUrl = img;
+  }
+
   // Attempt Firestore update
   try {
     const docRef = doc(db, COLLECTION_NAME, id);
@@ -215,6 +276,18 @@ export async function updateBusiness(id, updatedData, currentUid = null) {
       if (currentUid && existing.ownerUid && existing.ownerUid !== currentUid) {
         throw new Error('Permission denied: You do not own this listing.');
       }
+
+      // If incoming ownerName is empty but existing document had a valid ownerName, preserve it!
+      if (!safeUpdates.ownerName && (existing.ownerName || existing.hostName)) {
+        safeUpdates.ownerName = existing.ownerName || existing.hostName;
+      }
+
+      // If incoming image is not specified or empty, preserve existing image!
+      if (!safeUpdates.image && existing.image) {
+        safeUpdates.image = existing.image;
+        safeUpdates.imageUrl = existing.image;
+      }
+
       await updateDoc(docRef, {
         ...safeUpdates,
         updatedAt: serverTimestamp()
