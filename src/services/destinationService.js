@@ -63,7 +63,7 @@ function normalizeDestinationDoc(docSnap) {
     bestTimeToVisit: data.bestTimeToVisit || 'Early Morning',
     rating: data.rating ? Number(data.rating) : 4.5,
     reviewsCount: data.reviewsCount ? Number(data.reviewsCount) : 1500,
-    image: data.image || 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1000&q=80',
+    image: data.image || '/images/destinations/north-goa/baga-beach.jpg',
     highlights: Array.isArray(data.highlights) ? data.highlights : ['Scenic views', 'Cultural significance'],
     entryFee: data.estimatedCost || data.entryFee || 'Free',
     estimatedCost: data.estimatedCost || data.entryFee || 'Free',

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Building2, Plus, Edit3, Trash2, Check, X, Users, DollarSign, Eye, MessageSquare, ShieldCheck, ArrowRight, Sparkles, LogOut, Store } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Building2, Plus, Edit3, Trash2, Check, X, Users, DollarSign, Eye, MessageSquare, ShieldCheck, ArrowRight, Sparkles, LogOut, Store, UploadCloud, Camera, AlertCircle } from 'lucide-react';
 import { getBusinesses, getBusinessesFromFirestore, addBusiness, updateBusiness, getBookings, updateBookingStatus } from '../services/businessService';
 import { MARKETPLACE_CATEGORIES } from '../data/businesses';
 import { useAuth } from '../context/AuthContext';
+import { uploadBusinessPhoto, validateImageFile, fileToDataUrl, getCategoryFallbackImage } from '../services/storageService';
 
 export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
   const { currentUser, userProfile, logout } = useAuth();
@@ -39,7 +40,7 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
   }, []);
 
   // New Listing Form State
-  const [newBiz, setNewBiz] = useState({
+  const initialFormState = {
     name: '',
     ownerName: '',
     category: MARKETPLACE_CATEGORIES[1],
@@ -48,44 +49,145 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
     location: '',
     startingPrice: 500,
     priceUnit: 'per person',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80',
+    image: '',
+    storagePath: null,
+    hasOwnerPhoto: false,
     description: '',
     services: 'Organic Home Dining, Guided Heritage Walk',
     contact: '+91 98765 00000',
     operatingHours: '10:00 AM - 06:00 PM'
-  });
+  };
 
+  const [newBiz, setNewBiz] = useState(initialFormState);
   const [editingBizId, setEditingBizId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Image Upload & Preview State
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState('');
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageError('');
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setImageError(validation.error);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    try {
+      setSelectedFile(file);
+      const dataUrl = await fileToDataUrl(file);
+      setImagePreview(dataUrl);
+    } catch (err) {
+      setImageError('Failed to read image preview: ' + err.message);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setSelectedFile(null);
+    setImagePreview(null);
+    setImageError('');
+    setNewBiz((prev) => ({ ...prev, image: '', storagePath: null, hasOwnerPhoto: false }));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleCreateOrUpdateListing = async (e) => {
     e.preventDefault();
+    setImageError('');
+
+    if (!newBiz.name.trim()) {
+      setImageError('Please enter a business or experience name.');
+      return;
+    }
+    if (!newBiz.ownerName.trim()) {
+      setImageError('Please enter the host or owner name.');
+      return;
+    }
+
+    // Starting Price validation: finite, non-negative number
+    const rawPrice = newBiz.startingPrice;
+    const parsedPrice = typeof rawPrice === 'string'
+      ? (rawPrice.trim() === '' ? 500 : parseFloat(rawPrice.trim()))
+      : Number(rawPrice);
+
+    if (isNaN(parsedPrice) || !isFinite(parsedPrice) || parsedPrice < 0) {
+      setImageError('Please enter a valid, non-negative starting price.');
+      return;
+    }
 
     const servicesArray = typeof newBiz.services === 'string'
       ? newBiz.services.split(',').map((s) => s.trim()).filter(Boolean)
       : newBiz.services;
 
     const ownerUid = currentUser?.uid || 'verified-owner-uid';
+    const targetListingId = editingBizId || `biz-${Date.now()}`;
+
+    let resolvedImageUrl = newBiz.image || newBiz.imageUrl;
+    let resolvedStoragePath = newBiz.storagePath;
+    let hasOwnerPhoto = Boolean(newBiz.hasOwnerPhoto);
+
+    // If the business owner selected a new photo file, upload it
+    if (selectedFile) {
+      setUploadingImage(true);
+      try {
+        const uploadResult = await uploadBusinessPhoto(selectedFile, ownerUid, targetListingId);
+        if (uploadResult.downloadUrl) {
+          resolvedImageUrl = uploadResult.downloadUrl;
+          resolvedStoragePath = uploadResult.storagePath;
+          hasOwnerPhoto = true;
+        } else if (uploadResult.isFallback) {
+          // Cloud Storage unprovisioned in Firebase Console (Spark Plan limitation)
+          if (!resolvedImageUrl) {
+            resolvedImageUrl = getCategoryFallbackImage(newBiz.category);
+          }
+          console.info('Storage Notice:', uploadResult.notice);
+          hasOwnerPhoto = false;
+        }
+      } catch (uploadErr) {
+        setUploadingImage(false);
+        setImageError('Photo upload failed: ' + uploadErr.message);
+        return;
+      }
+      setUploadingImage(false);
+    } else if (!resolvedImageUrl) {
+      // If no photo was selected and none exists, apply category-specific fallback
+      resolvedImageUrl = getCategoryFallbackImage(newBiz.category);
+      hasOwnerPhoto = false;
+    }
+
+    const payload = {
+      ...newBiz,
+      ownerName: newBiz.ownerName.trim(),
+      startingPrice: parsedPrice,
+      price: parsedPrice,
+      image: resolvedImageUrl,
+      imageUrl: resolvedImageUrl,
+      storagePath: resolvedStoragePath,
+      hasOwnerPhoto,
+      services: servicesArray
+    };
 
     if (editingBizId) {
-      await updateBusiness(editingBizId, {
-        ...newBiz,
-        services: servicesArray,
-        startingPrice: Number(newBiz.startingPrice)
-      }, ownerUid);
+      await updateBusiness(editingBizId, payload, ownerUid);
       setSuccessMessage('Listing updated successfully!');
     } else {
-      await addBusiness({
-        ...newBiz,
-        services: servicesArray,
-        startingPrice: Number(newBiz.startingPrice)
-      }, ownerUid);
+      await addBusiness(payload, ownerUid);
       setSuccessMessage('New local business published to the marketplace!');
     }
 
     const refreshed = await getBusinessesFromFirestore();
     setBusinesses(refreshed);
     setEditingBizId(null);
+    setSelectedFile(null);
+    setImagePreview(null);
+    setNewBiz(initialFormState);
     setActiveTab('listings');
 
     setTimeout(() => setSuccessMessage(''), 3500);
@@ -93,20 +195,33 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
 
   const handleStartEdit = (biz) => {
     setEditingBizId(biz.id);
+    setSelectedFile(null);
+    setImageError('');
+    const currentImg = biz.imageUrl || biz.image || getCategoryFallbackImage(biz.category);
+    setImagePreview(currentImg);
+
+    const resolvedPrice = biz.startingPrice !== undefined && biz.startingPrice !== null
+      ? biz.startingPrice
+      : (biz.price ?? 500);
+
     setNewBiz({
-      name: biz.name,
-      ownerName: biz.ownerName || '',
-      category: biz.category,
-      region: biz.region,
-      taluka: biz.taluka,
-      location: biz.location,
-      startingPrice: biz.startingPrice,
+      name: biz.name || '',
+      ownerName: biz.ownerName || biz.hostName || biz.contactName || '',
+      category: biz.category || MARKETPLACE_CATEGORIES[1],
+      region: biz.region || 'South Goa',
+      taluka: biz.taluka || '',
+      location: biz.location || biz.address || '',
+      startingPrice: resolvedPrice,
+      price: resolvedPrice,
       priceUnit: biz.priceUnit || 'per person',
-      image: biz.image,
-      description: biz.description,
-      services: biz.services ? biz.services.join(', ') : '',
-      contact: biz.contact,
-      operatingHours: biz.operatingHours
+      image: biz.image || biz.imageUrl || '',
+      imageUrl: biz.imageUrl || biz.image || '',
+      storagePath: biz.storagePath || null,
+      hasOwnerPhoto: Boolean(biz.hasOwnerPhoto),
+      description: biz.description || '',
+      services: biz.services ? (Array.isArray(biz.services) ? biz.services.join(', ') : biz.services) : '',
+      contact: biz.contact || '',
+      operatingHours: biz.operatingHours || '10:00 AM - 06:00 PM'
     });
     setActiveTab('new-listing');
   };
@@ -285,11 +400,22 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
                     className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-colors"
                   >
                     <div className="flex gap-4">
-                      <img
-                        src={biz.image}
-                        alt={biz.name}
-                        className="w-20 h-20 rounded-xl object-cover shrink-0"
-                      />
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-800">
+                        <img
+                          src={biz.imageUrl || biz.image || getCategoryFallbackImage(biz.category)}
+                          alt={biz.name}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = getCategoryFallbackImage(biz.category);
+                          }}
+                          className="w-full h-full object-cover"
+                        />
+                        {biz.hasOwnerPhoto && (
+                          <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-teal-600/90 text-white text-[9px] font-bold rounded">
+                            Photo
+                          </span>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
                           <span className="text-[10px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/70 px-2 py-0.5 rounded-full">
@@ -481,9 +607,12 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Starting Price (₹)</label>
                   <input
                     type="number"
+                    min="0"
+                    step="1"
                     value={newBiz.startingPrice}
                     onChange={(e) => setNewBiz({ ...newBiz, startingPrice: e.target.value })}
                     required
+                    placeholder="e.g. 500"
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-100"
                   />
                 </div>
@@ -533,6 +662,97 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
                     placeholder="09:00 AM - 06:00 PM"
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-100"
                   />
+                </div>
+              </div>
+
+              {/* Dedicated Business Photos Section */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <span>Business Photos</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Upload an authentic photograph of your experience, homestay, or dishes (JPG, PNG, WEBP • Max 5 MB).
+                  </p>
+                </div>
+
+                {imageError && (
+                  <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{imageError}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {/* Photo Preview / Placeholder */}
+                  <div className="relative w-36 h-24 rounded-2xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                    {imagePreview ? (
+                      <>
+                        <img
+                          src={imagePreview}
+                          alt="Business Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemovePhoto}
+                          className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-red-600 text-white rounded-full transition-colors cursor-pointer shadow-xs"
+                          title="Remove photo"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="text-center p-2 text-slate-400 dark:text-slate-500">
+                        <Camera className="w-6 h-6 mx-auto mb-1 opacity-60" />
+                        <span className="text-[10px] block leading-tight">No photo selected</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Controls */}
+                  <div className="space-y-2 flex-1">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-slate-200 dark:border-slate-700"
+                      >
+                        <UploadCloud className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                        <span>{imagePreview ? 'Replace Photo' : 'Upload Business Photo'}</span>
+                      </button>
+
+                      {imagePreview && (
+                        <button
+                          type="button"
+                          onClick={handleRemovePhoto}
+                          className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          Remove Photo
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-400">
+                      {selectedFile ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                          Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(0)} KB)
+                        </span>
+                      ) : imagePreview ? (
+                        <span>Currently using saved photo. Click Replace to upload a new one.</span>
+                      ) : (
+                        <span>If no photo is uploaded, a verified category fallback will be applied automatically.</span>
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
 

@@ -356,6 +356,57 @@ assertTest(
   'Unauthenticated users are directed to ProtectedAccessGuard sign-in prompt'
 );
 
+// ======================================================================
+// STORAGE SECURITY RULES SIMULATION (Matching storage.rules)
+// ======================================================================
+function canUploadBusinessPhoto(auth, targetOwnerUid, fileSize, contentType) {
+  if (!auth) return false;
+  if (auth.uid !== targetOwnerUid) return false;
+  if (fileSize > 5 * 1024 * 1024) return false;
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  return allowedTypes.includes(contentType.toLowerCase());
+}
+
+function canReadBusinessPhoto() {
+  return true; // allow read: if true;
+}
+
+// TEST 16: Public visitors can view business photos
+assertTest(
+  'Test 16: Public visitors can view marketplace business photos',
+  canReadBusinessPhoto() === true,
+  'storage.rules permits open read access for all marketplace photos'
+);
+
+// TEST 17: Authenticated Business Owner can upload valid photo to their own folder
+const ownerAuth = { uid: 'owner-abc' };
+assertTest(
+  'Test 17: Authenticated Business Owner can upload valid photo (< 5MB, JPG/PNG/WEBP)',
+  canUploadBusinessPhoto(ownerAuth, 'owner-abc', 2 * 1024 * 1024, 'image/jpeg') === true,
+  'Authorized upload into business-images/owner-abc/... passes validation'
+);
+
+// TEST 18: Business Owner A cannot upload or overwrite Business Owner B folder
+assertTest(
+  'Test 18: Business Owner A cannot upload to Business Owner B storage folder',
+  canUploadBusinessPhoto(ownerAuth, 'owner-xyz', 1 * 1024 * 1024, 'image/jpeg') === false,
+  'storage.rules strictly isolates uploads by request.auth.uid == ownerUid'
+);
+
+// TEST 19: Storage rejects oversized files (> 5 MB)
+assertTest(
+  'Test 19: Storage rejects uploads exceeding 5 MB limit',
+  canUploadBusinessPhoto(ownerAuth, 'owner-abc', 6 * 1024 * 1024, 'image/jpeg') === false,
+  'Rule enforces request.resource.size <= 5 * 1024 * 1024'
+);
+
+// TEST 20: Storage rejects unsupported MIME types (e.g. PDF, executable)
+assertTest(
+  'Test 20: Storage rejects non-image formats (e.g. application/pdf, text/html)',
+  canUploadBusinessPhoto(ownerAuth, 'owner-abc', 500 * 1024, 'application/pdf') === false,
+  'Rule enforces contentType matching image/(jpeg|jpg|png|webp)'
+);
+
 // ----------------------------------------------------------------------
 console.log('\n---------------------------------------------------------------');
 console.log(`TOTAL SECURITY TESTS: ${totalTests}`);

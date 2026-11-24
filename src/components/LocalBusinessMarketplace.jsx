@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Store, Search, Filter, MapPin, Star, Heart, ArrowUpRight, DollarSign, Calendar, Users, ShieldCheck, CheckCircle2, Clock, Phone, Sparkles, X, ChevronRight } from 'lucide-react';
+import { Store, Search, Filter, MapPin, Star, Heart, ArrowUpRight, DollarSign, Calendar, Users, ShieldCheck, CheckCircle2, Clock, Phone, Sparkles, X, ChevronRight, Camera } from 'lucide-react';
 import { getBusinesses, getBusinessesFromFirestore, createBooking } from '../services/businessService';
 import { MARKETPLACE_CATEGORIES } from '../data/businesses';
+import { getCategoryFallbackImage } from '../services/storageService';
 
 export default function LocalBusinessMarketplace({
   onSelectBusinessOwnerPortal,
@@ -236,8 +237,12 @@ export default function LocalBusinessMarketplace({
               {/* Image & Tags */}
               <div className="relative h-48 overflow-hidden bg-slate-100 dark:bg-slate-800">
                 <img
-                  src={biz.image}
+                  src={biz.imageUrl || biz.image || getCategoryFallbackImage(biz.category)}
                   alt={biz.name}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = getCategoryFallbackImage(biz.category);
+                  }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20 pointer-events-none" />
@@ -247,12 +252,20 @@ export default function LocalBusinessMarketplace({
                   {biz.category}
                 </span>
 
-                {biz.isFairVisibilityFeatured && (
-                  <span className="absolute top-3 right-3 px-2 py-0.5 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold rounded-full flex items-center gap-1 shadow-xs">
-                    <Sparkles className="w-3 h-3" />
-                    <span>Village Pick</span>
-                  </span>
-                )}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                  {biz.hasOwnerPhoto && (
+                    <span className="px-2 py-0.5 bg-teal-600/90 backdrop-blur-md text-white text-[10px] font-bold rounded-full flex items-center gap-1 shadow-xs" title="Verified Host Photograph">
+                      <Camera className="w-3 h-3" />
+                      <span>Host Photo</span>
+                    </span>
+                  )}
+                  {biz.isFairVisibilityFeatured && (
+                    <span className="px-2 py-0.5 bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-bold rounded-full flex items-center gap-1 shadow-xs">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Village Pick</span>
+                    </span>
+                  )}
+                </div>
 
                 {/* Location & Rating */}
                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
@@ -345,8 +358,12 @@ export default function LocalBusinessMarketplace({
             {/* Header Image */}
             <div className="relative h-48 sm:h-56 w-full bg-slate-900 shrink-0">
               <img
-                src={selectedBusiness.image}
+                src={selectedBusiness.imageUrl || selectedBusiness.image || getCategoryFallbackImage(selectedBusiness.category)}
                 alt={selectedBusiness.name}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = getCategoryFallbackImage(selectedBusiness.category);
+                }}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
