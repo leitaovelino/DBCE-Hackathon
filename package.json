@@ -10,7 +10,8 @@
     "server": "node server/index.js",
     "check:keys": "node scripts/checkApiKeys.js",
     "test:backend": "cd server && node testBackend.js",
-    "test:security": "node scripts/testSecurityRules.js"
+    "test:security": "node scripts/testSecurityRules.js",
+    "test:e2e": "node scripts/testMarketplaceAndBookingsE2E.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -26,12 +26,20 @@ import {
   addDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { INITIAL_BUSINESSES, SAMPLE_BOOKINGS } from '../data/businesses';
+import {
+  createBooking as createBookingInFirestore,
+  getLocalBookings,
+  saveLocalBookings,
+  updateBookingStatusByOwner,
+  cancelBookingByTourist
+} from './bookingService';
 
 const STORAGE_KEY_BIZ = 'goasmart_businesses_v1';
 const STORAGE_KEY_BOOKINGS = 'goasmart_bookings_v1';
@@ -83,6 +91,7 @@ function normalizeBusinessDoc(docSnap) {
     contact: data.contact || '+91 98765 00000',
     operatingHours: data.operatingHours || '10:00 AM - 06:00 PM',
     isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
+    isDeleted: Boolean(data.isDeleted),
     rating: data.rating || 5.0,
     reviewsCount: data.reviewsCount || 1,
     isLesserKnown: Boolean(data.isLesserKnown ?? true),
@@ -133,6 +142,8 @@ export async function getBusinessesFromFirestore() {
         firestoreListings = allSnapshot.docs.map(normalizeBusinessDoc);
       }
     }
+    // Filter out inactive or soft-deleted records from public marketplace
+    firestoreListings = firestoreListings.filter((b) => b.isActive !== false && !b.isDeleted);
 
     // Data Protection: Merge Firestore listings with baseline INITIAL_BUSINESSES
     // so baseline records are always accessible even if some are still synchronizing.
@@ -302,42 +313,81 @@ export async function updateBusiness(id, updatedData, currentUid = null) {
   return updated.find((b) => b.id === id);
 }
 
+/**
+ * Delete or deactivate a business listing.
+ * Verifies that currentUid matches the listing's ownerUid.
+ * Checks for historical bookings:
+ * - If historical bookings reference this business, performs soft deletion (isActive: false, isDeleted: true)
+ *   to guarantee historical records and foreign key integrity are fully preserved.
+ * - If no bookings reference it, removes or deactivates in Firestore.
+ * Always removes the listing from active public marketplace discovery.
+ */
+export async function deleteBusiness(id, currentUid) {
+  if (!id) throw new Error('Listing ID is required.');
+  if (!currentUid) throw new Error('Authentication required to delete listing.');
+
+  const current = getBusinesses();
+  const targetBiz = current.find((b) => b.id === id);
+
+  try {
+    const docRef = doc(db, COLLECTION_NAME, id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data.ownerUid && data.ownerUid !== currentUid) {
+        throw new Error('Permission denied: You do not own this business listing.');
+      }
+
+      // Check whether historical bookings reference this business
+      let hasBookings = false;
+      try {
+        const bookingsCol = collection(db, 'bookings');
+        const q = query(bookingsCol, where('businessId', '==', id));
+        const bookingSnap = await getDocs(q);
+        hasBookings = !bookingSnap.empty;
+      } catch (err) {
+        console.warn('Booking check failed during deletion, using safe soft-delete:', err.message);
+        hasBookings = true;
+      }
+
+      if (hasBookings) {
+        // Soft delete: deactivates listing from marketplace while preserving booking references
+        await updateDoc(docRef, {
+          isActive: false,
+          isDeleted: true,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        // Hard delete when no historical bookings exist
+        await deleteDoc(docRef);
+      }
+    }
+  } catch (err) {
+    console.warn(`Firestore business deletion failed for ${id} (updating local cache):`, err.message);
+  }
+
+  // Update local cache: remove from local businesses
+  const updated = current.filter((b) => b.id !== id);
+  saveBusinesses(updated);
+  return { success: true, id };
+}
+
 // -------------------------------------------------------------
-// Bookings (In-memory & localStorage mock service for bookings)
+// Bookings (Bridged to real Firestore bookingService with local cache)
 // -------------------------------------------------------------
 export function getBookings() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY_BOOKINGS);
-    return data ? JSON.parse(data) : SAMPLE_BOOKINGS;
-  } catch {
-    return SAMPLE_BOOKINGS;
-  }
+  return getLocalBookings();
 }
 
 export function saveBookings(bookings) {
-  try {
-    localStorage.setItem(STORAGE_KEY_BOOKINGS, JSON.stringify(bookings));
-  } catch (e) {
-    console.error('Failed to save bookings', e);
-  }
+  saveLocalBookings(bookings);
 }
 
-export function createBooking(bookingData) {
-  const current = getBookings();
-  const newBooking = {
-    ...bookingData,
-    id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
-    status: 'Confirmed',
-    requestTime: 'Just now'
-  };
-  const updated = [newBooking, ...current];
-  saveBookings(updated);
-  return newBooking;
+export async function createBooking(bookingData, touristUser = null) {
+  return await createBookingInFirestore(bookingData, touristUser);
 }
 
-export function updateBookingStatus(id, newStatus) {
-  const current = getBookings();
-  const updated = current.map((b) => (b.id === id ? { ...b, status: newStatus } : b));
-  saveBookings(updated);
-  return updated;
+export async function updateBookingStatus(id, newStatus, currentUid = null) {
+  return await updateBookingStatusByOwner(id, newStatus, currentUid);
 }

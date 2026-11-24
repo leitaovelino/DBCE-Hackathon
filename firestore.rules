@@ -102,7 +102,53 @@ service cloud.firestore {
     }
 
     // ==========================================
-    // 5. DEFAULT DENY ALL OTHER COLLECTIONS
+    // 5. BOOKINGS & RESERVATIONS COLLECTION
+    // ==========================================
+    match /bookings/{bookingId} {
+      // Read: Tourist can read their own bookings; Listing Owner can read bookings for their businesses; Authority can read
+      allow read: if isAuthenticated() && (
+        resource.data.touristUid == request.auth.uid ||
+        resource.data.ownerUid == request.auth.uid ||
+        isAuthority()
+      );
+
+      // Create: Authenticated Tourist can create a booking for themselves
+      allow create: if isAuthenticated() 
+                    && ('touristUid' in request.resource.data)
+                    && request.resource.data.touristUid == request.auth.uid
+                    && ('businessId' in request.resource.data)
+                    && ('ownerUid' in request.resource.data)
+                    && ('requestedDate' in request.resource.data)
+                    && request.resource.data.bookingStatus == 'pending';
+
+      // Update:
+      // 1. Business Owner can update bookingStatus to 'accepted' or 'rejected'
+      // 2. Tourist can update bookingStatus to 'cancelled' only if current status is 'pending'
+      // Neither party can alter immutable fields: touristUid, ownerUid, businessId
+      allow update: if isAuthenticated() && (
+        (
+          resource.data.ownerUid == request.auth.uid &&
+          request.resource.data.touristUid == resource.data.touristUid &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.businessId == resource.data.businessId &&
+          request.resource.data.bookingStatus in ['accepted', 'rejected', 'pending']
+        ) ||
+        (
+          resource.data.touristUid == request.auth.uid &&
+          resource.data.bookingStatus == 'pending' &&
+          request.resource.data.bookingStatus == 'cancelled' &&
+          request.resource.data.touristUid == resource.data.touristUid &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.businessId == resource.data.businessId
+        )
+      );
+
+      // Delete: Hard deletion disallowed to preserve historical booking records for both parties
+      allow delete: if false;
+    }
+
+    // ==========================================
+    // 6. DEFAULT DENY ALL OTHER COLLECTIONS
     // ==========================================
     match /{document=**} {
       allow read, write: if false;
