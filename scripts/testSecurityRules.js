@@ -116,6 +116,51 @@ class FirestoreRulesSimulator {
   canWriteNudges(auth) {
     return this.isAuthority(auth);
   }
+
+  // bookings/{bookingId} -> allow read
+  canReadBooking(auth, resourceData) {
+    return this.isAuthenticated(auth) && (
+      resourceData.touristUid === auth.uid ||
+      resourceData.ownerUid === auth.uid ||
+      this.isAuthority(auth)
+    );
+  }
+
+  // bookings/{bookingId} -> allow create
+  canCreateBooking(auth, incomingData) {
+    return this.isAuthenticated(auth)
+      && ('touristUid' in incomingData)
+      && incomingData.touristUid === auth.uid
+      && ('businessId' in incomingData)
+      && ('ownerUid' in incomingData)
+      && ('requestedDate' in incomingData)
+      && incomingData.bookingStatus === 'pending';
+  }
+
+  // bookings/{bookingId} -> allow update
+  canUpdateBooking(auth, existingData, incomingData) {
+    if (!this.isAuthenticated(auth)) return false;
+
+    const isOwnerUpdating = existingData.ownerUid === auth.uid
+      && incomingData.touristUid === existingData.touristUid
+      && incomingData.ownerUid === existingData.ownerUid
+      && incomingData.businessId === existingData.businessId
+      && ['accepted', 'rejected', 'pending'].includes(incomingData.bookingStatus);
+
+    const isTouristCancelling = existingData.touristUid === auth.uid
+      && existingData.bookingStatus === 'pending'
+      && incomingData.bookingStatus === 'cancelled'
+      && incomingData.touristUid === existingData.touristUid
+      && incomingData.ownerUid === existingData.ownerUid
+      && incomingData.businessId === existingData.businessId;
+
+    return isOwnerUpdating || isTouristCancelling;
+  }
+
+  // bookings/{bookingId} -> allow delete: if false;
+  canDeleteBooking(auth, existingData) {
+    return false;
+  }
 }
 
 const sim = new FirestoreRulesSimulator(rulesContent);
@@ -405,6 +450,118 @@ assertTest(
   'Test 20: Storage rejects non-image formats (e.g. application/pdf, text/html)',
   canUploadBusinessPhoto(ownerAuth, 'owner-abc', 500 * 1024, 'application/pdf') === false,
   'Rule enforces contentType matching image/(jpeg|jpg|png|webp)'
+);
+
+// ======================================================================
+// BOOKINGS & RESERVATIONS SECURITY RULES SIMULATION
+// ======================================================================
+
+// TEST 21: Tourist can create a valid booking for themselves with pending status
+const validTouristBooking = {
+  touristUid: touristAuth.uid,
+  businessId: 'biz-1',
+  ownerUid: businessAuth.uid,
+  requestedDate: '2026-12-01',
+  bookingStatus: 'pending'
+};
+assertTest(
+  'Test 21: Tourist can create a valid booking for themselves with pending status',
+  sim.canCreateBooking(touristAuth, validTouristBooking) === true,
+  'request.auth.uid == touristUid and bookingStatus == "pending"'
+);
+
+// TEST 22: Tourist cannot create a booking for another tourist or set status to accepted
+const fakeTouristBooking = {
+  touristUid: 'another-tourist-999',
+  businessId: 'biz-1',
+  ownerUid: businessAuth.uid,
+  requestedDate: '2026-12-01',
+  bookingStatus: 'pending'
+};
+const bypassPendingBooking = {
+  touristUid: touristAuth.uid,
+  businessId: 'biz-1',
+  ownerUid: businessAuth.uid,
+  requestedDate: '2026-12-01',
+  bookingStatus: 'accepted'
+};
+assertTest(
+  'Test 22: Tourist cannot spoof touristUid or create self-accepted bookings',
+  sim.canCreateBooking(touristAuth, fakeTouristBooking) === false && sim.canCreateBooking(touristAuth, bypassPendingBooking) === false,
+  'firestore.rules rejects booking creation if touristUid != auth.uid or status != "pending"'
+);
+
+// TEST 23: Tourist A cannot read Tourist B booking records
+const otherTouristBookingRecord = {
+  touristUid: 'tourist-B',
+  ownerUid: 'some-other-biz-owner',
+  businessId: 'biz-2',
+  bookingStatus: 'pending'
+};
+assertTest(
+  'Test 23: Tourist A cannot read Tourist B booking records',
+  sim.canReadBooking(touristAuth, otherTouristBookingRecord) === false,
+  'Rule enforces resource.data.touristUid == request.auth.uid'
+);
+
+// TEST 24: Business Owner can read and accept/reject booking requests for their business
+const ownerBookingRecord = {
+  touristUid: touristAuth.uid,
+  ownerUid: businessAuth.uid,
+  businessId: 'biz-1',
+  bookingStatus: 'pending'
+};
+const canOwnerRead = sim.canReadBooking(businessAuth, ownerBookingRecord);
+const canOwnerAccept = sim.canUpdateBooking(businessAuth, ownerBookingRecord, {
+  ...ownerBookingRecord,
+  bookingStatus: 'accepted'
+});
+const canOwnerReject = sim.canUpdateBooking(businessAuth, ownerBookingRecord, {
+  ...ownerBookingRecord,
+  bookingStatus: 'rejected'
+});
+assertTest(
+  'Test 24: Business Owner can read and accept/reject booking requests for their business',
+  canOwnerRead === true && canOwnerAccept === true && canOwnerReject === true,
+  'resource.data.ownerUid == request.auth.uid permits reading and status transitions'
+);
+
+// TEST 25: Business Owner cannot tamper with touristUid, ownerUid, or businessId
+const tamperedBooking = {
+  ...ownerBookingRecord,
+  touristUid: 'hacked-tourist-uid',
+  bookingStatus: 'accepted'
+};
+assertTest(
+  'Test 25: Business Owner cannot tamper with touristUid, ownerUid, or businessId on status update',
+  sim.canUpdateBooking(businessAuth, ownerBookingRecord, tamperedBooking) === false,
+  'Rule enforces immutable touristUid, ownerUid, and businessId across updates'
+);
+
+// TEST 26: Tourist can cancel their own pending booking, but cannot cancel an accepted booking
+const touristCancelPending = sim.canUpdateBooking(touristAuth, ownerBookingRecord, {
+  ...ownerBookingRecord,
+  bookingStatus: 'cancelled'
+});
+const acceptedBookingRecord = {
+  ...ownerBookingRecord,
+  bookingStatus: 'accepted'
+};
+const touristCancelAccepted = sim.canUpdateBooking(touristAuth, acceptedBookingRecord, {
+  ...acceptedBookingRecord,
+  bookingStatus: 'cancelled'
+});
+assertTest(
+  'Test 26: Tourist can cancel pending booking, but cannot cancel accepted booking',
+  touristCancelPending === true && touristCancelAccepted === false,
+  'Tourist can only transition from "pending" to "cancelled"'
+);
+
+// TEST 27: Hard deletion of bookings is denied to protect historical records
+assertTest(
+  'Test 27: Booking hard deletion is denied for all parties to preserve historical data',
+  sim.canDeleteBooking(touristAuth, ownerBookingRecord) === false && sim.canDeleteBooking(businessAuth, ownerBookingRecord) === false,
+  'allow delete: if false guarantees persistent booking history'
 );
 
 // ----------------------------------------------------------------------

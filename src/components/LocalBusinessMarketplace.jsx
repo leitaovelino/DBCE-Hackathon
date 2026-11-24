@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Store, Search, Filter, MapPin, Star, Heart, ArrowUpRight, DollarSign, Calendar, Users, ShieldCheck, CheckCircle2, Clock, Phone, Sparkles, X, ChevronRight, Camera } from 'lucide-react';
-import { getBusinesses, getBusinessesFromFirestore, createBooking } from '../services/businessService';
+import { Store, Search, Filter, MapPin, Star, Heart, ArrowUpRight, DollarSign, Calendar, Users, ShieldCheck, CheckCircle2, Clock, Phone, Sparkles, X, ChevronRight, Camera, AlertCircle, Clock3 } from 'lucide-react';
+import { getBusinesses, getBusinessesFromFirestore } from '../services/businessService';
+import { createBooking } from '../services/bookingService';
 import { MARKETPLACE_CATEGORIES } from '../data/businesses';
 import { getCategoryFallbackImage } from '../services/storageService';
+import { useAuth } from '../context/AuthContext';
 
 export default function LocalBusinessMarketplace({
   onSelectBusinessOwnerPortal,
+  onOpenAuthModal,
+  onNavigateToMyBookings,
   t
 }) {
+  const { currentUser, userProfile, isAuthenticated } = useAuth();
   const [businesses, setBusinesses] = useState(() => getBusinesses());
   const [loadingListings, setLoadingListings] = useState(false);
 
@@ -44,10 +49,21 @@ export default function LocalBusinessMarketplace({
     return d.toISOString().split('T')[0];
   });
   const [bookingGuests, setBookingGuests] = useState(2);
-  const [customerName, setCustomerName] = useState('Aniket Rao');
-  const [customerEmail, setCustomerEmail] = useState('aniket.rao@example.com');
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('+91 98765 43210');
+  const [bookingNotes, setBookingNotes] = useState('');
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState('');
   const [confirmedBooking, setConfirmedBooking] = useState(null);
+
+  // Auto-populate tourist details if signed in
+  useEffect(() => {
+    if (currentUser) {
+      if (!customerName) setCustomerName(userProfile?.name || currentUser.displayName || '');
+      if (!customerEmail) setCustomerEmail(currentUser.email || '');
+    }
+  }, [currentUser, userProfile]);
 
   // Filter businesses
   const filteredBusinesses = useMemo(() => {
@@ -81,26 +97,53 @@ export default function LocalBusinessMarketplace({
     setSelectedBusiness(business);
     setSelectedExperience(business.experiences ? business.experiences[0] : null);
     setConfirmedBooking(null);
+    setBookingError('');
+    if (currentUser) {
+      setCustomerName(userProfile?.name || currentUser.displayName || '');
+      setCustomerEmail(currentUser.email || '');
+    }
   };
 
-  const handleSubmitBooking = (e) => {
+  const handleSubmitBooking = async (e) => {
     e.preventDefault();
     if (!selectedBusiness || !selectedExperience) return;
+    setBookingError('');
 
-    const totalAmount = selectedExperience.price * bookingGuests;
-    const newBooking = createBooking({
-      businessId: selectedBusiness.id,
-      businessName: selectedBusiness.name,
-      customerName,
-      customerEmail,
-      customerPhone,
-      serviceName: selectedExperience.name,
-      date: bookingDate,
-      guests: bookingGuests,
-      totalAmount
-    });
+    // Ensure tourist is authenticated
+    if (!currentUser?.uid) {
+      setBookingError('Please sign in as a Tourist to complete your booking.');
+      if (onOpenAuthModal) onOpenAuthModal('login');
+      return;
+    }
 
-    setConfirmedBooking(newBooking);
+    setBookingSubmitting(true);
+    try {
+      const totalAmount = (selectedExperience.price || 0) * bookingGuests;
+      const newBooking = await createBooking({
+        businessId: selectedBusiness.id,
+        businessName: selectedBusiness.name,
+        businessLocation: selectedBusiness.location || selectedBusiness.address,
+        businessImage: selectedBusiness.imageUrl || selectedBusiness.image,
+        ownerUid: selectedBusiness.ownerUid,
+        ownerName: selectedBusiness.ownerName,
+        touristUid: currentUser.uid,
+        touristName: customerName.trim() || userProfile?.name || currentUser.displayName || 'Tourist Guest',
+        touristEmail: customerEmail.trim() || currentUser.email || '',
+        touristPhone: customerPhone.trim(),
+        serviceName: selectedExperience.name,
+        requestedDate: bookingDate,
+        numberOfGuests: bookingGuests,
+        notes: bookingNotes.trim(),
+        totalAmount,
+        bookingStatus: 'pending'
+      }, currentUser);
+
+      setConfirmedBooking(newBooking);
+    } catch (err) {
+      setBookingError(err.message || 'Failed to submit booking request.');
+    } finally {
+      setBookingSubmitting(false);
+    }
   };
 
   return (
@@ -391,50 +434,81 @@ export default function LocalBusinessMarketplace({
               
               {confirmedBooking ? (
                 /* Booking Confirmation State */
-                <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-center space-y-3">
+                <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-center space-y-4">
                   <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <h4 className="text-lg font-black text-emerald-950 dark:text-emerald-200">
-                    Booking Request Confirmed!
-                  </h4>
-                  <p className="text-xs text-emerald-800 dark:text-emerald-300 max-w-md mx-auto">
-                    Your reservation has been forwarded to <strong>{selectedBusiness.ownerName}</strong>. A simulated confirmation voucher has been generated.
-                  </p>
+                  <div>
+                    <h4 className="text-lg font-black text-emerald-950 dark:text-emerald-200">
+                      Booking Request Submitted!
+                    </h4>
+                    <p className="text-xs text-emerald-800 dark:text-emerald-300 max-w-md mx-auto mt-1">
+                      Your reservation request has been delivered to <strong>{selectedBusiness.ownerName || 'the host'}</strong>.
+                    </p>
+                  </div>
 
-                  <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/60 text-left text-xs space-y-1.5 max-w-sm mx-auto">
+                  <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/60 text-left text-xs space-y-2 max-w-sm mx-auto shadow-xs">
                     <div className="flex justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Booking Reference:</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{confirmedBooking.id}</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                        {confirmedBooking.bookingId || confirmedBooking.id}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 dark:text-slate-400">Enterprise:</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100">{selectedBusiness.name}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Service:</span>
                       <span className="font-bold text-slate-900 dark:text-slate-100">{confirmedBooking.serviceName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500 dark:text-slate-400">Scheduled Date:</span>
-                      <span className="font-bold text-slate-900 dark:text-slate-100">{confirmedBooking.date}</span>
+                      <span className="text-slate-500 dark:text-slate-400">Visit Date:</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100">
+                        {confirmedBooking.requestedDate || confirmedBooking.date}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Guests:</span>
-                      <span className="font-bold text-slate-900 dark:text-slate-100">{confirmedBooking.guests}</span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100">{confirmedBooking.numberOfGuests || confirmedBooking.guests}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-500 dark:text-slate-400">Initial Status:</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        <Clock3 className="w-3 h-3 text-amber-600" />
+                        <span>Pending Host Confirmation</span>
+                      </span>
                     </div>
                     <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400">Total Estimated Cost:</span>
+                      <span className="text-slate-500 dark:text-slate-400">Estimated Cost:</span>
                       <span className="font-black text-emerald-700 dark:text-emerald-400">₹{confirmedBooking.totalAmount.toLocaleString()}</span>
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                    *Sample reservation demonstration. No actual payment or credit card was charged.
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    This reservation has been recorded in your <strong>My Bookings</strong> section and forwarded directly to the business owner.
                   </p>
 
-                  <button
-                    onClick={() => setSelectedBusiness(null)}
-                    className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    Done & Return
-                  </button>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    {onNavigateToMyBookings && (
+                      <button
+                        onClick={() => {
+                          setSelectedBusiness(null);
+                          onNavigateToMyBookings();
+                        }}
+                        className="px-4 py-2.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>View in My Bookings</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setSelectedBusiness(null)}
+                      className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Done & Return
+                    </button>
+                  </div>
                 </div>
               ) : (
                 /* Booking Form State */
@@ -466,12 +540,19 @@ export default function LocalBusinessMarketplace({
                     </div>
                   </div>
 
+                  {bookingError && (
+                    <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs font-bold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{bookingError}</span>
+                    </div>
+                  )}
+
                   {/* Booking Form */}
                   <form onSubmit={handleSubmitBooking} className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center justify-between">
-                      <span>Book an Experience</span>
-                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-900/60">
-                        Demo Mode
+                      <span>Reserve Your Experience</span>
+                      <span className="text-[10px] font-bold text-teal-700 dark:text-teal-400 bg-teal-100 dark:bg-teal-950/60 px-2 py-0.5 rounded-full border border-teal-200 dark:border-teal-900/60">
+                        Direct Reservation
                       </span>
                     </h5>
 
@@ -526,7 +607,7 @@ export default function LocalBusinessMarketplace({
                           onChange={(e) => setBookingGuests(Number(e.target.value))}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl p-2.5 font-semibold text-slate-800 dark:text-slate-100 cursor-pointer"
                         >
-                          {[1, 2, 3, 4, 6, 8].map((n) => (
+                          {[1, 2, 3, 4, 6, 8, 10].map((n) => (
                             <option key={n} value={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>
                           ))}
                         </select>
@@ -538,7 +619,7 @@ export default function LocalBusinessMarketplace({
                         type="text"
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="Your Name"
+                        placeholder="Your Full Name"
                         required
                         className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl p-2.5 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       />
@@ -560,6 +641,17 @@ export default function LocalBusinessMarketplace({
                       />
                     </div>
 
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Special Notes or Dietary Preferences (Optional)</label>
+                      <input
+                        type="text"
+                        value={bookingNotes}
+                        onChange={(e) => setBookingNotes(e.target.value)}
+                        placeholder="e.g. Vegetarian diet, arriving by ferry, need airport taxi advice..."
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl p-2.5 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                      />
+                    </div>
+
                     {/* Total & Submit */}
                     <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                       <div>
@@ -571,9 +663,17 @@ export default function LocalBusinessMarketplace({
 
                       <button
                         type="submit"
-                        className="py-3 px-6 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer"
+                        disabled={bookingSubmitting}
+                        className="py-3 px-6 bg-teal-700 hover:bg-teal-800 disabled:opacity-60 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
                       >
-                        Submit Booking Request
+                        {bookingSubmitting ? (
+                          <>
+                            <Clock className="w-3.5 h-3.5 animate-spin" />
+                            <span>Submitting...</span>
+                          </>
+                        ) : (
+                          <span>Submit Booking Request</span>
+                        )}
                       </button>
                     </div>
                   </form>

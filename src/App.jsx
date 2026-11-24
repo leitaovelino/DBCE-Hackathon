@@ -21,6 +21,7 @@ import SmartItineraryPlanner from './components/SmartItineraryPlanner';
 import LocalBusinessMarketplace from './components/LocalBusinessMarketplace';
 import BusinessOwnerDashboard from './components/BusinessOwnerDashboard';
 import TourismAuthorityDashboard from './components/TourismAuthorityDashboard';
+import TouristMyBookings from './components/TouristMyBookings';
 
 // Phase 5 Auth & RBAC
 import { useAuth } from './context/AuthContext';
@@ -266,8 +267,41 @@ export default function App() {
               setActiveView('business');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onNavigateToMyBookings={() => {
+              setActiveView('my-bookings');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onOpenAuthModal={(mode) => {
+              setAuthModalMode(mode || 'login');
+              setAuthModalOpen(true);
+            }}
             t={t}
           />
+        )}
+
+        {/* View 6.5: Dedicated Tourist My Bookings Section */}
+        {activeView === 'my-bookings' && (
+          isAuthenticated ? (
+            <TouristMyBookings
+              onBackToMarketplace={() => {
+                setActiveView('marketplace');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onExplore={() => {
+                setActiveView('tourist');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          ) : (
+            <ProtectedAccessGuard
+              requiredRole="tourist"
+              onOpenAuth={(mode) => {
+                setAuthModalMode(mode || 'login');
+                setAuthModalOpen(true);
+              }}
+              onBackToExplore={() => setActiveView('tourist')}
+            />
+          )
         )}
 
         {/* View 7: Phase 2 AI Tourism Companion Chatbot */}

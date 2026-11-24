@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Building2, Plus, Edit3, Trash2, Check, X, Users, DollarSign, Eye, MessageSquare, ShieldCheck, ArrowRight, Sparkles, LogOut, Store, UploadCloud, Camera, AlertCircle } from 'lucide-react';
-import { getBusinesses, getBusinessesFromFirestore, addBusiness, updateBusiness, getBookings, updateBookingStatus } from '../services/businessService';
+import { Building2, Plus, Edit3, Trash2, Check, X, Users, DollarSign, Eye, MessageSquare, ShieldCheck, ArrowRight, Sparkles, LogOut, Store, UploadCloud, Camera, AlertCircle, Calendar, Clock, Phone, Mail, Ban, CheckCircle2, XCircle, Clock3 } from 'lucide-react';
+import { getBusinesses, getBusinessesFromFirestore, addBusiness, updateBusiness, deleteBusiness } from '../services/businessService';
+import { subscribeOwnerBookings, updateBookingStatusByOwner, getLocalBookings } from '../services/bookingService';
 import { MARKETPLACE_CATEGORIES } from '../data/businesses';
 import { useAuth } from '../context/AuthContext';
 import { uploadBusinessPhoto, validateImageFile, fileToDataUrl, getCategoryFallbackImage } from '../services/storageService';
@@ -8,8 +9,14 @@ import { uploadBusinessPhoto, validateImageFile, fileToDataUrl, getCategoryFallb
 export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
   const { currentUser, userProfile, logout } = useAuth();
   const [businesses, setBusinesses] = useState(() => getBusinesses());
-  const [bookings, setBookings] = useState(() => getBookings());
+  const [bookings, setBookings] = useState(() => {
+    if (!currentUser?.uid) return [];
+    return getLocalBookings().filter((b) => b.ownerUid === currentUser.uid);
+  });
   const [activeTab, setActiveTab] = useState('listings'); // 'listings', 'bookings', 'new-listing'
+  const [bookingFilter, setBookingFilter] = useState('all'); // 'all', 'pending', 'accepted', 'rejected', 'cancelled'
+  const [deletingBiz, setDeletingBiz] = useState(null); // business object pending delete
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
 
   // Owner's listings: strictly filter by the authenticated user UID
   const ownerListings = useMemo(() => {
@@ -22,7 +29,7 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
     if (onBackToMarketplace) onBackToMarketplace();
   };
 
-  // Load from Firestore
+  // Load businesses from Firestore and subscribe to live Owner Bookings
   useEffect(() => {
     let isMounted = true;
     async function refreshListings() {
@@ -36,8 +43,24 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
       }
     }
     refreshListings();
-    return () => { isMounted = false; };
-  }, []);
+
+    // Live subscription to incoming bookings for this owner
+    let unsubscribeBookings = () => {};
+    if (currentUser?.uid) {
+      unsubscribeBookings = subscribeOwnerBookings(
+        currentUser.uid,
+        (liveBookings) => {
+          if (isMounted) setBookings(liveBookings);
+        },
+        (err) => console.warn('Owner bookings listener notice:', err.message)
+      );
+    }
+
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribeBookings === 'function') unsubscribeBookings();
+    };
+  }, [currentUser?.uid]);
 
   // New Listing Form State
   const initialFormState = {
@@ -226,9 +249,29 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
     setActiveTab('new-listing');
   };
 
-  const handleUpdateBooking = (id, newStatus) => {
-    const updated = updateBookingStatus(id, newStatus);
-    setBookings(updated);
+  const handleUpdateBooking = async (id, newStatus) => {
+    if (!currentUser?.uid) return;
+    try {
+      await updateBookingStatusByOwner(id, newStatus, currentUser.uid);
+      setSuccessMessage(`Booking status updated to ${newStatus}.`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      setImageError('Failed to update booking: ' + err.message);
+    }
+  };
+
+  const handleConfirmDeleteListing = async () => {
+    if (!deletingBiz || !currentUser?.uid) return;
+    try {
+      await deleteBusiness(deletingBiz.id, currentUser.uid);
+      setSuccessMessage(`Listing "${deletingBiz.name}" has been removed from the public marketplace.`);
+      setDeletingBiz(null);
+      const refreshed = await getBusinessesFromFirestore();
+      setBusinesses(refreshed);
+      setTimeout(() => setSuccessMessage(''), 3500);
+    } catch (err) {
+      setImageError('Failed to delete listing: ' + err.message);
+    }
   };
 
   return (
@@ -433,15 +476,25 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
 
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                       <span className="text-[11px] text-slate-400 dark:text-slate-400">
-                        Rating: <strong>{biz.rating} ★</strong> ({biz.reviewsCount} reviews)
+                        Host: <strong>{biz.ownerName || 'Verified'}</strong>
                       </span>
-                      <button
-                        onClick={() => handleStartEdit(biz)}
-                        className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit Details</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleStartEdit(biz)}
+                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => setDeletingBiz(biz)}
+                          className="px-2.5 py-1.5 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded-lg font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Delete Listing"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -452,78 +505,140 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
 
         {/* Tab 2: Incoming Bookings Management */}
         {activeTab === 'bookings' && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden transition-colors space-y-4 p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">Incoming Tourist Reservations</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Review and update customer booking requests</p>
               </div>
-              <span className="text-xs font-bold bg-teal-50 dark:bg-teal-950/70 text-teal-800 dark:text-teal-300 px-3 py-1 rounded-full border border-teal-200 dark:border-teal-800">
-                {bookings.filter((b) => b.status === 'Confirmed').length} Confirmed
-              </span>
+
+              {/* Status Filter Tabs */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'pending', label: 'Pending' },
+                  { id: 'accepted', label: 'Accepted' },
+                  { id: 'rejected', label: 'Rejected' },
+                  { id: 'cancelled', label: 'Cancelled' }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setBookingFilter(f.id)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      bookingFilter === f.id
+                        ? 'bg-teal-700 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-700">
-                  <tr>
-                    <th className="p-4">Ref ID</th>
-                    <th className="p-4">Customer</th>
-                    <th className="p-4">Experience / Service</th>
-                    <th className="p-4">Date & Guests</th>
-                    <th className="p-4">Total Amount</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {bookings.map((bk) => (
-                    <tr key={bk.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="p-4 font-mono font-bold text-slate-900 dark:text-slate-100">{bk.id}</td>
-                      <td className="p-4">
-                        <span className="font-bold text-slate-900 dark:text-slate-100 block">{bk.customerName}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-400">{bk.requestTime}</span>
-                      </td>
-                      <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">{bk.serviceName}</td>
-                      <td className="p-4">
-                        <span className="block font-semibold text-slate-800 dark:text-slate-200">{bk.date}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-400">{bk.guests} Guests</span>
-                      </td>
-                      <td className="p-4 font-black text-slate-900 dark:text-slate-100">₹{bk.totalAmount.toLocaleString()}</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          bk.status === 'Confirmed' ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' :
-                          bk.status === 'Pending' ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800' :
-                          'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                        }`}>
-                          {bk.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-1.5">
-                        {bk.status !== 'Confirmed' && (
-                          <button
-                            onClick={() => handleUpdateBooking(bk.id, 'Confirmed')}
-                            className="p-1.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-lg transition-colors cursor-pointer"
-                            title="Confirm"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        )}
-                        {bk.status !== 'Declined' && (
-                          <button
-                            onClick={() => handleUpdateBooking(bk.id, 'Declined')}
-                            className="p-1.5 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
-                            title="Decline"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
-                      </td>
+            {bookings.length === 0 ? (
+              <div className="py-12 text-center space-y-3">
+                <Calendar className="w-8 h-8 text-slate-400 mx-auto" />
+                <h4 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">No reservations received yet</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                  When tourists reserve your experiences or homestay from the marketplace, their requests will appear here in real time.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+                  <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                      <th className="p-3.5">Ref ID</th>
+                      <th className="p-3.5">Customer</th>
+                      <th className="p-3.5">Enterprise & Service</th>
+                      <th className="p-3.5">Date & Guests</th>
+                      <th className="p-3.5">Total Amount</th>
+                      <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {bookings
+                      .filter((bk) => {
+                        const status = (bk.bookingStatus || bk.status || 'pending').toLowerCase();
+                        if (bookingFilter === 'pending') return status === 'pending';
+                        if (bookingFilter === 'accepted') return status === 'accepted' || status === 'confirmed';
+                        if (bookingFilter === 'rejected') return status === 'rejected' || status === 'declined';
+                        if (bookingFilter === 'cancelled') return status === 'cancelled';
+                        return true;
+                      })
+                      .map((bk) => {
+                        const status = (bk.bookingStatus || bk.status || 'pending').toLowerCase();
+                        return (
+                          <tr key={bk.id || bk.bookingId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                            <td className="p-3.5 font-mono font-bold text-slate-900 dark:text-slate-100">
+                              {bk.bookingId || bk.id}
+                            </td>
+                            <td className="p-3.5">
+                              <span className="font-bold text-slate-900 dark:text-slate-100 block">{bk.touristName || bk.customerName}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-400 block">{bk.touristPhone || bk.customerPhone || bk.touristEmail}</span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className="font-bold text-slate-900 dark:text-slate-100 block">{bk.businessName}</span>
+                              <span className="text-[11px] text-teal-700 dark:text-teal-400">{bk.serviceName}</span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className="block font-semibold text-slate-800 dark:text-slate-200">{bk.requestedDate || bk.date}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-400">{bk.numberOfGuests || bk.guests} Guests</span>
+                            </td>
+                            <td className="p-3.5 font-black text-slate-900 dark:text-slate-100">₹{bk.totalAmount.toLocaleString()}</td>
+                            <td className="p-3.5">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                status === 'accepted' || status === 'confirmed'
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                  : status === 'pending'
+                                  ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                  : status === 'rejected' || status === 'declined'
+                                  ? 'bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                              }`}>
+                                {status === 'accepted' && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+                                {status === 'pending' && <Clock3 className="w-3 h-3 text-amber-600" />}
+                                {status === 'rejected' && <XCircle className="w-3 h-3 text-rose-600" />}
+                                {status === 'cancelled' && <Ban className="w-3 h-3 text-slate-500" />}
+                                <span>{status}</span>
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-right space-x-1">
+                              <button
+                                onClick={() => setSelectedBookingDetails(bk)}
+                                className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                                title="View Details / Notes"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                              {status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => handleUpdateBooking(bk.id || bk.bookingId, 'accepted')}
+                                    className="p-1.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-lg transition-colors cursor-pointer"
+                                    title="Accept Request"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateBooking(bk.id || bk.bookingId, 'rejected')}
+                                    className="p-1.5 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
+                                    title="Decline Request"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -776,6 +891,139 @@ export default function BusinessOwnerDashboard({ onBackToMarketplace }) {
         )}
 
       </div>
+
+      {/* Delete Listing Confirmation Modal */}
+      {deletingBiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/70 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
+                Delete Business Listing?
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Are you sure you want to delete this listing? It will no longer appear in the public marketplace.
+              </p>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 text-xs font-bold text-left">
+                <div>Enterprise: {deletingBiz.name}</div>
+                <div className="text-[11px] text-slate-400 font-normal mt-0.5">Category: {deletingBiz.category} • Location: {deletingBiz.location}</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingBiz(null)}
+                className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteListing}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-sm"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Details Modal for Business Owner */}
+      {selectedBookingDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <span className="text-[10px] uppercase font-extrabold tracking-wider text-teal-600 dark:text-teal-400">
+                  Customer Reservation Details
+                </span>
+                <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
+                  {selectedBookingDetails.bookingId || selectedBookingDetails.id}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedBookingDetails(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Tourist Name:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    {selectedBookingDetails.touristName || selectedBookingDetails.customerName}
+                  </span>
+                </div>
+                {selectedBookingDetails.touristEmail && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Email:</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">{selectedBookingDetails.touristEmail}</span>
+                  </div>
+                )}
+                {selectedBookingDetails.touristPhone && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Phone:</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedBookingDetails.touristPhone}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Enterprise:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{selectedBookingDetails.businessName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Experience / Service:</span>
+                  <span className="font-bold text-teal-700 dark:text-teal-400">{selectedBookingDetails.serviceName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Scheduled Date:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    {selectedBookingDetails.requestedDate || selectedBookingDetails.date}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Guests:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    {selectedBookingDetails.numberOfGuests || selectedBookingDetails.guests} Guests
+                  </span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <span className="text-slate-400">Total Booking Value:</span>
+                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                    ₹{selectedBookingDetails.totalAmount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {selectedBookingDetails.notes && (
+                <div>
+                  <span className="text-slate-400 font-bold block mb-1">Customer Notes:</span>
+                  <p className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {selectedBookingDetails.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setSelectedBookingDetails(null)}
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
